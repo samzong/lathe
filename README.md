@@ -52,6 +52,8 @@ flowchart LR
 
 Two commands drive the loop. Neither runs at `go build` time — downstream binaries have no codegen dependency at install.
 
+For the full package layout, add-a-module workflow, and request lifecycle with diagrams, see [docs/architecture.md](docs/architecture.md).
+
 ---
 
 ## Quick start
