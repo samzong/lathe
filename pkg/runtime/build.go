@@ -8,8 +8,6 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-
-	"github.com/samzong/lathe/internal/overlay"
 )
 
 // ModuleGroupID is the cobra group ID every generated service command tree
@@ -32,7 +30,6 @@ func Build(root *cobra.Command, service string, specs []CommandSpec) {
 			svc.AddCommand(g)
 		}
 		c := buildCmd(s)
-		overlay.Apply(c, service, s.Use)
 		g.AddCommand(c)
 	}
 	root.AddCommand(svc)
@@ -44,8 +41,11 @@ func buildCmd(s CommandSpec) *cobra.Command {
 	var bodySets []string
 
 	cmd := &cobra.Command{
-		Use:   s.Use,
-		Short: s.Short,
+		Use:     s.Use,
+		Aliases: s.Aliases,
+		Short:   s.Short,
+		Long:    s.Long,
+		Example: s.Example,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			hostname, token, clientOpts, err := LoadHostOptions(cmd)
 			if err != nil {

@@ -1,12 +1,18 @@
 # Example overlay for a single module.
 #
-# Rename this file to <module-name>.yaml (e.g. iam.yaml, billing.yaml) matching
-# a key under specs/sources.yaml in your own repo. Every file in this directory
-# is embedded into the binary at build time via //go:embed *.yaml.
+# Place this file at <dir>/<module-name>.yaml (e.g. iam.yaml, billing.yaml)
+# matching a key under specs/sources.yaml in your own repo, then pass the
+# containing directory to codegen via -overlay, e.g.:
+#
+#   go run github.com/samzong/lathe/cmd/codegen \
+#     -sources specs/sources.yaml \
+#     -overlay internal/overlay
 #
 # The overlay layer rewrites help text and aliases for commands synthesized
 # from the upstream spec. The command's Use string matches CommandSpec.Use
 # emitted by codegen (typically the lowercased operationId / rpc name).
+# Overrides are baked into the generated CommandSpec at codegen time; the
+# runtime knows nothing about overlays.
 #
 # Leave the file empty ({} / no "commands:" key) if you do not want to override
 # anything; the generated layer passes through verbatim.

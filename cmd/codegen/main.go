@@ -11,6 +11,7 @@ import (
 	"github.com/samzong/lathe/internal/codegen/normalize"
 	"github.com/samzong/lathe/internal/codegen/rawir"
 	"github.com/samzong/lathe/internal/codegen/render"
+	"github.com/samzong/lathe/internal/overlay"
 	"github.com/samzong/lathe/internal/sourceconfig"
 	"github.com/samzong/lathe/internal/specsync"
 )
@@ -18,9 +19,13 @@ import (
 func main() {
 	sourcesPath := flag.String("sources", "specs/sources.yaml", "sources.yaml path")
 	cacheRoot := flag.String("cache", "", "cache root (default $LATHE_SPECS_CACHE or .cache)")
+	overlayDir := flag.String("overlay", "", "directory containing <module>.yaml overlay files (optional)")
 	flag.Parse()
 
 	cfg, err := sourceconfig.Load(*sourcesPath)
+	must(err)
+
+	overlays, err := overlay.LoadDir(*overlayDir)
 	must(err)
 
 	root := *cacheRoot
@@ -43,7 +48,7 @@ func main() {
 		must(err)
 
 		specs := normalize.Normalize(mod)
-		must(render.RenderModule(src.Name, specs))
+		must(render.RenderModule(src.Name, specs, overlays[src.Name]))
 		names = append(names, src.Name)
 	}
 	must(render.RenderModulesGen(names))

@@ -7,7 +7,10 @@ package runtime
 type CommandSpec struct {
 	Group        string
 	Use          string
+	Aliases      []string
 	Short        string
+	Long         string
+	Example      string
 	Method       string
 	PathTpl      string
 	Params       []ParamSpec

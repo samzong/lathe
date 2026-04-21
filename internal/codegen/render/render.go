@@ -8,6 +8,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/samzong/lathe/internal/overlay"
 	"github.com/samzong/lathe/pkg/runtime"
 )
 
@@ -27,12 +28,36 @@ type moduleCtx struct {
 // vendor or copy the runtime package into their own tree.
 const RuntimePkg = "github.com/samzong/lathe/pkg/runtime"
 
-func RenderModule(name string, specs []runtime.CommandSpec) error {
+// RenderModule emits internal/generated/<name>/<name>_gen.go. overrides is
+// keyed by command Use string; each override's non-empty fields are baked into
+// the corresponding CommandSpec (Aliases are appended, not replaced). Passing
+// a nil map means "no overlay", equivalent to the pre-overlay behavior.
+func RenderModule(name string, specs []runtime.CommandSpec, overrides map[string]overlay.Override) error {
+	merged := make([]runtime.CommandSpec, len(specs))
+	copy(merged, specs)
+	for i := range merged {
+		o, ok := overrides[merged[i].Use]
+		if !ok {
+			continue
+		}
+		if o.Short != "" {
+			merged[i].Short = o.Short
+		}
+		if o.Long != "" {
+			merged[i].Long = o.Long
+		}
+		if o.Example != "" {
+			merged[i].Example = o.Example
+		}
+		if len(o.Aliases) > 0 {
+			merged[i].Aliases = append(merged[i].Aliases, o.Aliases...)
+		}
+	}
 	var buf strings.Builder
 	ctx := moduleCtx{
 		Module:     name,
 		RuntimePkg: RuntimePkg,
-		Ops:        specs,
+		Ops:        merged,
 	}
 	if err := moduleTmpl.Execute(&buf, ctx); err != nil {
 		return err
@@ -99,7 +124,16 @@ var Specs = []runtime.CommandSpec{
 	{
 		Group:   {{printf "%q" $op.Group}},
 		Use:     {{printf "%q" $op.Use}},
+		{{- if $op.Aliases}}
+		Aliases: []string{ {{- range $op.Aliases}}{{printf "%q" .}}, {{end -}} },
+		{{- end}}
 		Short:   {{printf "%q" $op.Short}},
+		{{- if $op.Long}}
+		Long:    {{printf "%q" $op.Long}},
+		{{- end}}
+		{{- if $op.Example}}
+		Example: {{printf "%q" $op.Example}},
+		{{- end}}
 		Method:  {{printf "%q" $op.Method}},
 		PathTpl: {{printf "%q" $op.PathTpl}},
 		{{- if $op.Params}}

@@ -148,7 +148,15 @@ commands:
         --role viewer
 ```
 
-Overlays are embedded into the binary at build time. Empty file = pass-through.
+Point codegen at the overlay directory with `-overlay`:
+
+```sh
+go run github.com/samzong/lathe/cmd/codegen \
+  -sources specs/sources.yaml \
+  -overlay internal/overlay
+```
+
+Overrides are baked into the generated `CommandSpec` at codegen time — the runtime knows nothing about overlays. Empty or missing directory = pass-through.
 
 ---
 

@@ -1,18 +1,13 @@
 package overlay
 
 import (
-	"embed"
 	"fmt"
-	"io/fs"
 	"os"
+	"path/filepath"
 	"strings"
 
-	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
-
-//go:embed *.yaml
-var fsys embed.FS
 
 // Override is the per-command hand-written UX patch applied on top of the
 // mechanically generated command. Every field is optional; empty means
@@ -28,50 +23,36 @@ type moduleFile struct {
 	Commands map[string]Override `yaml:"commands"`
 }
 
-var all = map[string]map[string]Override{}
-
-func init() {
-	_ = fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
-		if err != nil || d.IsDir() || !strings.HasSuffix(path, ".yaml") {
-			return nil
+// LoadDir reads every <module>.yaml under dir and returns a nested map keyed
+// by module name then command Use string. An empty or non-existent dir yields
+// an empty map without error — overlays are always optional.
+func LoadDir(dir string) (map[string]map[string]Override, error) {
+	out := map[string]map[string]Override{}
+	if dir == "" {
+		return out, nil
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return out, nil
 		}
-		data, rerr := fsys.ReadFile(path)
+		return nil, fmt.Errorf("overlay: read dir %s: %w", dir, err)
+	}
+	for _, e := range entries {
+		if e.IsDir() || !strings.HasSuffix(e.Name(), ".yaml") {
+			continue
+		}
+		path := filepath.Join(dir, e.Name())
+		data, rerr := os.ReadFile(path)
 		if rerr != nil {
-			fmt.Fprintf(os.Stderr, "overlay: read %s: %v\n", path, rerr)
-			return nil
+			return nil, fmt.Errorf("overlay: read %s: %w", path, rerr)
 		}
 		var mf moduleFile
 		if yerr := yaml.Unmarshal(data, &mf); yerr != nil {
-			fmt.Fprintf(os.Stderr, "overlay: parse %s: %v\n", path, yerr)
-			return nil
+			return nil, fmt.Errorf("overlay: parse %s: %w", path, yerr)
 		}
-		module := strings.TrimSuffix(path, ".yaml")
-		all[module] = mf.Commands
-		return nil
-	})
-}
-
-// Apply patches cmd with the overlay registered for (module, use) if any.
-// Fields left empty in the overlay keep the generated values.
-func Apply(cmd *cobra.Command, module, use string) {
-	m, ok := all[module]
-	if !ok {
-		return
+		module := strings.TrimSuffix(e.Name(), ".yaml")
+		out[module] = mf.Commands
 	}
-	o, ok := m[use]
-	if !ok {
-		return
-	}
-	if o.Short != "" {
-		cmd.Short = o.Short
-	}
-	if o.Long != "" {
-		cmd.Long = o.Long
-	}
-	if o.Example != "" {
-		cmd.Example = o.Example
-	}
-	if len(o.Aliases) > 0 {
-		cmd.Aliases = append(cmd.Aliases, o.Aliases...)
-	}
+	return out, nil
 }
