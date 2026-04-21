@@ -19,7 +19,7 @@ If private advisories are disabled or unreachable, DM the maintainer on GitHub (
 In scope:
 
 - Command-injection / argument-parsing flaws in the generated CLI surface.
-- SSRF / path-traversal / unsafe TLS defaults in the HTTP client (`internal/runtime/client.go`).
+- SSRF / path-traversal / unsafe TLS defaults in the HTTP client (`pkg/runtime/client.go`).
 - Leakage of tokens or host secrets via logs, error messages, or persisted files.
 - Codegen emitting unsafe patterns that propagate to downstream binaries.
 

@@ -38,7 +38,7 @@ type AuthValidateDisplay struct {
 
 // Load parses raw cli.yaml bytes into a Manifest. The caller (typically main.go)
 // supplies the bytes — usually via //go:embed at the module root — so that
-// internal/config stays free of a reverse import on the downstream repo root.
+// pkg/config stays free of a reverse import on the downstream repo root.
 //
 // Empty identity fields are filled from cli.name: config_dir defaults to the
 // name itself (→ ~/.config/<name>/), and the env var names default to

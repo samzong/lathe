@@ -115,9 +115,9 @@ type index struct {
 }
 
 type messageEntry struct {
-	file     *descriptorpb.FileDescriptorProto
-	msg      *descriptorpb.DescriptorProto
-	parents  []int32
+	file    *descriptorpb.FileDescriptorProto
+	msg     *descriptorpb.DescriptorProto
+	parents []int32
 }
 
 func newIndex(fds *descriptorpb.FileDescriptorSet) *index {

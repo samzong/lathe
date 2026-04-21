@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/samzong/lathe/internal/config"
+	"github.com/samzong/lathe/pkg/config"
 )
 
 // ErrNotAuthenticated is the sentinel returned when no host is configured

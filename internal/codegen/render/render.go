@@ -6,10 +6,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 	"text/template"
 
-	"github.com/samzong/lathe/internal/runtime"
+	"github.com/samzong/lathe/pkg/runtime"
 )
 
 const (
@@ -23,15 +22,16 @@ type moduleCtx struct {
 	Ops        []runtime.CommandSpec
 }
 
+// RuntimePkg is the import path downstream-generated modules use to reach
+// lathe's runtime. Downstream forks import lathe as a library; they do not
+// vendor or copy the runtime package into their own tree.
+const RuntimePkg = "github.com/samzong/lathe/pkg/runtime"
+
 func RenderModule(name string, specs []runtime.CommandSpec) error {
-	mp, err := modulePath()
-	if err != nil {
-		return err
-	}
 	var buf strings.Builder
 	ctx := moduleCtx{
 		Module:     name,
-		RuntimePkg: mp + "/internal/runtime",
+		RuntimePkg: RuntimePkg,
 		Ops:        specs,
 	}
 	if err := moduleTmpl.Execute(&buf, ctx); err != nil {
@@ -93,7 +93,7 @@ func Mount(root *cobra.Command) {
 }
 
 // Specs declares every {{.Module}} command as data. The generic runner in
-// internal/runtime/build.go consumes this slice at startup.
+// lathe's pkg/runtime consumes this slice at startup.
 var Specs = []runtime.CommandSpec{
 {{- range $op := .Ops}}
 	{
@@ -151,32 +151,21 @@ func MountModules(root *cobra.Command) {
 }
 `))
 
-var (
-	cachedModulePath string
-	modulePathErr    error
-	modulePathOnce   sync.Once
-)
-
 // modulePath reads the `module` directive from go.mod in the current working
-// directory and caches the result for the remainder of the process. Codegen
-// uses this to compute the generated package's import prefix and the runtime
-// package's path, so a downstream fork can rename the Go module without
-// touching codegen source.
+// directory. Codegen uses this to compute the downstream's own generated/
+// package import prefix so a downstream fork can rename its Go module without
+// touching codegen source. The runtime package is always imported from lathe
+// itself (see RuntimePkg).
 func modulePath() (string, error) {
-	modulePathOnce.Do(func() {
-		data, err := os.ReadFile("go.mod")
-		if err != nil {
-			modulePathErr = fmt.Errorf("read go.mod: %w", err)
-			return
+	data, err := os.ReadFile("go.mod")
+	if err != nil {
+		return "", fmt.Errorf("read go.mod: %w", err)
+	}
+	for _, line := range strings.Split(string(data), "\n") {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "module ") {
+			return strings.TrimSpace(strings.TrimPrefix(line, "module ")), nil
 		}
-		for _, line := range strings.Split(string(data), "\n") {
-			line = strings.TrimSpace(line)
-			if strings.HasPrefix(line, "module ") {
-				cachedModulePath = strings.TrimSpace(strings.TrimPrefix(line, "module "))
-				return
-			}
-		}
-		modulePathErr = fmt.Errorf("no module directive in go.mod")
-	})
-	return cachedModulePath, modulePathErr
+	}
+	return "", fmt.Errorf("no module directive in go.mod")
 }

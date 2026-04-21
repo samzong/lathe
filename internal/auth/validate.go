@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/samzong/lathe/internal/config"
-	"github.com/samzong/lathe/internal/runtime"
+	"github.com/samzong/lathe/pkg/config"
+	"github.com/samzong/lathe/pkg/runtime"
 )
 
 type validateResult struct {

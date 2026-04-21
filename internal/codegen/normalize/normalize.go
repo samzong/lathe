@@ -7,7 +7,7 @@ import (
 	"unicode"
 
 	"github.com/samzong/lathe/internal/codegen/rawir"
-	"github.com/samzong/lathe/internal/runtime"
+	"github.com/samzong/lathe/pkg/runtime"
 )
 
 func Normalize(mod *rawir.RawModule) []runtime.CommandSpec {

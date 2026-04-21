@@ -11,8 +11,8 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 
-	"github.com/samzong/lathe/internal/config"
-	"github.com/samzong/lathe/internal/runtime"
+	"github.com/samzong/lathe/pkg/config"
+	"github.com/samzong/lathe/pkg/runtime"
 )
 
 func NewCommand(m *config.Manifest) *cobra.Command {
