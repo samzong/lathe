@@ -1,0 +1,9 @@
+/bin/
+/dist/
+/coverage.out
+/go.work
+/go.work.sum
+.DS_Store
+
+/.cache/
+/internal/generated/

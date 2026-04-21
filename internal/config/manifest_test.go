@@ -1,0 +1,146 @@
+package config
+
+import "testing"
+
+func TestLoad_FullSpec(t *testing.T) {
+	data := []byte(`
+cli:
+  name: demo
+  short: "demo CLI"
+auth:
+  validate:
+    method: POST
+    path: /whoami
+    display:
+      username_field: user.name
+      fallback_field: uid
+`)
+	m, err := Load(data)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if m.CLI.Name != "demo" || m.CLI.Short != "demo CLI" {
+		t.Errorf("unexpected CLI: %+v", m.CLI)
+	}
+	if m.Auth.Validate == nil {
+		t.Fatal("expected Auth.Validate non-nil")
+	}
+	if m.Auth.Validate.Method != "POST" || m.Auth.Validate.Path != "/whoami" {
+		t.Errorf("unexpected AuthValidate: %+v", m.Auth.Validate)
+	}
+	if m.Auth.Validate.Display.UsernameField != "user.name" {
+		t.Errorf("unexpected UsernameField: %q", m.Auth.Validate.Display.UsernameField)
+	}
+	if m.Auth.Validate.Display.FallbackField != "uid" {
+		t.Errorf("unexpected FallbackField: %q", m.Auth.Validate.Display.FallbackField)
+	}
+}
+
+func TestLoad_NoAuthValidate(t *testing.T) {
+	data := []byte(`
+cli:
+  name: demo
+`)
+	m, err := Load(data)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if m.Auth.Validate != nil {
+		t.Errorf("expected Auth.Validate nil, got %+v", m.Auth.Validate)
+	}
+}
+
+// Empty method is preserved by Load; the default-to-GET is applied at
+// validateToken() call time, not at parse time.
+func TestLoad_PreservesEmptyMethod(t *testing.T) {
+	data := []byte(`
+cli:
+  name: demo
+auth:
+  validate:
+    path: /whoami
+    display:
+      username_field: username
+`)
+	m, err := Load(data)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if m.Auth.Validate == nil {
+		t.Fatal("expected Auth.Validate non-nil")
+	}
+	if m.Auth.Validate.Method != "" {
+		t.Errorf("expected empty method, got %q", m.Auth.Validate.Method)
+	}
+}
+
+func TestLoad_Malformed(t *testing.T) {
+	_, err := Load([]byte("this: is: not: yaml"))
+	if err == nil {
+		t.Fatal("expected error on malformed YAML")
+	}
+}
+
+func TestLoad_RequiresName(t *testing.T) {
+	_, err := Load([]byte(`cli: {}`))
+	if err == nil {
+		t.Fatal("expected error when cli.name is missing")
+	}
+}
+
+func TestLoad_DerivesIdentityDefaults(t *testing.T) {
+	m, err := Load([]byte(`cli: {name: foobar}`))
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if got, want := m.CLI.ConfigDir, "foobar"; got != want {
+		t.Errorf("ConfigDir: got %q, want %q", got, want)
+	}
+	if got, want := m.CLI.ConfigDirEnv, "FOOBAR_CONFIG_DIR"; got != want {
+		t.Errorf("ConfigDirEnv: got %q, want %q", got, want)
+	}
+	if got, want := m.CLI.HostEnv, "FOOBAR_HOST"; got != want {
+		t.Errorf("HostEnv: got %q, want %q", got, want)
+	}
+}
+
+func TestLoad_PreservesExplicitIdentity(t *testing.T) {
+	m, err := Load([]byte(`
+cli:
+  name: foo
+  config_dir: legacy
+  config_dir_env: LEGACY_CONFIG
+  host_env: LEGACY_HOST
+`))
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if m.CLI.ConfigDir != "legacy" || m.CLI.ConfigDirEnv != "LEGACY_CONFIG" || m.CLI.HostEnv != "LEGACY_HOST" {
+		t.Errorf("explicit identity overridden: %+v", m.CLI)
+	}
+}
+
+func TestBindActive_Panics(t *testing.T) {
+	boundMu.Lock()
+	bound = nil
+	boundMu.Unlock()
+	defer func() {
+		if r := recover(); r == nil {
+			t.Fatal("expected Active() to panic before Bind()")
+		}
+	}()
+	_ = Active()
+}
+
+func TestBindActive_RoundTrip(t *testing.T) {
+	m := &Manifest{CLI: CLIInfo{Name: "x", ConfigDir: "x", ConfigDirEnv: "X_CONFIG_DIR", HostEnv: "X_HOST"}}
+	Bind(m)
+	t.Cleanup(func() {
+		boundMu.Lock()
+		bound = nil
+		boundMu.Unlock()
+	})
+	if Active() != m {
+		t.Fatal("Active() did not return the bound manifest")
+	}
+}

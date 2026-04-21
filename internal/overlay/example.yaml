@@ -1,0 +1,27 @@
+# Example overlay for a single module.
+#
+# Rename this file to <module-name>.yaml (e.g. iam.yaml, billing.yaml) matching
+# a key under specs/sources.yaml in your own repo. Every file in this directory
+# is embedded into the binary at build time via //go:embed *.yaml.
+#
+# The overlay layer rewrites help text and aliases for commands synthesized
+# from the upstream spec. The command's Use string matches CommandSpec.Use
+# emitted by codegen (typically the lowercased operationId / rpc name).
+#
+# Leave the file empty ({} / no "commands:" key) if you do not want to override
+# anything; the generated layer passes through verbatim.
+
+commands: {}
+# Example:
+# commands:
+#   create-user:
+#     aliases: [adduser]
+#     short: "Create a user in the IAM service"
+#     long: |
+#       Registers a new user with the given email and initial role. The
+#       email must be unique; the role must exist in the target workspace.
+#     example: |
+#       myctl iam create-user \
+#         --email alice@example.com \
+#         --role viewer \
+#         --workspace default
