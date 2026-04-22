@@ -28,6 +28,7 @@ func NewApp(m *config.Manifest) *cobra.Command {
 	cmd.PersistentFlags().String("hostname", "", fmt.Sprintf("Server hostname (overrides $%s)", m.CLI.HostEnv))
 	cmd.PersistentFlags().StringP("output", "o", "table", "Output format: table|json|yaml|raw")
 	cmd.PersistentFlags().Bool("insecure", false, "Skip TLS certificate verification for this invocation")
+	cmd.PersistentFlags().Bool("debug", false, "Print HTTP request/response details to stderr")
 
 	cmd.AddGroup(
 		&cobra.Group{ID: authGroupID, Title: "Authentication:"},
@@ -37,5 +38,6 @@ func NewApp(m *config.Manifest) *cobra.Command {
 	authCmd := auth.NewCommand(m)
 	authCmd.GroupID = authGroupID
 	cmd.AddCommand(authCmd)
+	cmd.AddCommand(versionCmd())
 	return cmd
 }

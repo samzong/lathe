@@ -133,6 +133,9 @@ func buildCmd(s CommandSpec) *cobra.Command {
 				}
 			}
 
+			if v, err := cmd.Root().PersistentFlags().GetBool("debug"); err == nil && v {
+				clientOpts.Debug = true
+			}
 			clientOpts.Headers = hdrs
 			data, err := DoRaw(cmd.Context(), hostname, s.Method, path, body, clientOpts)
 			if err != nil {

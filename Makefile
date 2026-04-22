@@ -1,5 +1,12 @@
 GO       ?= go
 OUT_DIR  := ./bin
+VERSION  ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
+COMMIT   := $(shell git rev-parse --short HEAD 2>/dev/null || echo none)
+DATE     := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
+LDFLAGS  := -s -w \
+  -X github.com/samzong/lathe/pkg/lathe.Version=$(VERSION) \
+  -X github.com/samzong/lathe/pkg/lathe.Commit=$(COMMIT) \
+  -X github.com/samzong/lathe/pkg/lathe.Date=$(DATE)
 
 BOLD  := \033[1m
 CYAN  := \033[36m

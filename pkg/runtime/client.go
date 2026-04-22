@@ -19,6 +19,7 @@ type ClientOptions struct {
 	Insecure  bool
 	Timeout   time.Duration
 	Headers   map[string]string
+	Debug     bool
 }
 
 // BaseURL normalizes a user-facing hostname into an absolute URL base.
@@ -48,6 +49,9 @@ func HTTPClient(opts ClientOptions) *http.Client {
 			tlsCfg = &tls.Config{InsecureSkipVerify: true}
 		}
 		transport = &http.Transport{TLSClientConfig: tlsCfg}
+	}
+	if opts.Debug {
+		transport = &debugTransport{inner: transport}
 	}
 	return &http.Client{
 		Timeout:   timeout,
