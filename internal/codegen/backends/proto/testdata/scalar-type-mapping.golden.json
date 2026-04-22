@@ -1,0 +1,76 @@
+{
+  "Name": "demo",
+  "Operations": [
+    {
+      "Group": "Items",
+      "OperationID": "Items_ListX",
+      "Summary": "",
+      "Description": "",
+      "Method": "GET",
+      "Path": "/items",
+      "Parameters": [
+        {
+          "Name": "key",
+          "In": "query",
+          "Required": false,
+          "Type": "string",
+          "Description": ""
+        },
+        {
+          "Name": "count",
+          "In": "query",
+          "Required": false,
+          "Type": "integer",
+          "Description": ""
+        },
+        {
+          "Name": "big",
+          "In": "query",
+          "Required": false,
+          "Type": "integer",
+          "Description": ""
+        },
+        {
+          "Name": "flag",
+          "In": "query",
+          "Required": false,
+          "Type": "boolean",
+          "Description": ""
+        },
+        {
+          "Name": "blob",
+          "In": "query",
+          "Required": false,
+          "Type": "string",
+          "Description": ""
+        }
+      ],
+      "RequestBody": null,
+      "Responses": {
+        "200": {
+          "Schema": {
+            "Ref": "#/definitions/demo.ListXResponse",
+            "Type": "",
+            "Properties": null,
+            "Items": null
+          }
+        }
+      }
+    }
+  ],
+  "Schemas": {
+    "demo.ListXResponse": {
+      "Ref": "",
+      "Type": "object",
+      "Properties": {
+        "total": {
+          "Ref": "",
+          "Type": "integer",
+          "Properties": null,
+          "Items": null
+        }
+      },
+      "Items": null
+    }
+  }
+}

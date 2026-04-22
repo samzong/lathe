@@ -1,0 +1,28 @@
+[
+  {
+    "Group": "Users",
+    "Use": "get-user",
+    "Aliases": null,
+    "Short": "Get a user.",
+    "Long": "",
+    "Example": "",
+    "Method": "GET",
+    "PathTpl": "/users/{id}",
+    "Params": [
+      {
+        "Name": "id",
+        "Flag": "id",
+        "In": "path",
+        "GoType": "string",
+        "Help": "id (path, required)",
+        "Required": true
+      }
+    ],
+    "HasBody": false,
+    "BodyRequired": false,
+    "Output": {
+      "ListPath": "",
+      "DefaultColumns": null
+    }
+  }
+]

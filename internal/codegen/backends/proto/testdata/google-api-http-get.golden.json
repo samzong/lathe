@@ -1,0 +1,54 @@
+{
+  "Name": "demo",
+  "Operations": [
+    {
+      "Group": "Users",
+      "OperationID": "Users_GetUser",
+      "Summary": "",
+      "Description": "",
+      "Method": "GET",
+      "Path": "/users/{id}",
+      "Parameters": [
+        {
+          "Name": "id",
+          "In": "path",
+          "Required": true,
+          "Type": "string",
+          "Description": ""
+        }
+      ],
+      "RequestBody": null,
+      "Responses": {
+        "200": {
+          "Schema": {
+            "Ref": "#/definitions/demo.User",
+            "Type": "",
+            "Properties": null,
+            "Items": null
+          }
+        }
+      }
+    }
+  ],
+  "Schemas": {
+    "demo.User": {
+      "Ref": "",
+      "Type": "object",
+      "Properties": {
+        "id": {
+          "Ref": "",
+          "Type": "string",
+          "Properties": null,
+          "Items": null
+        },
+        "name": {
+          "Ref": "",
+          "Type": "string",
+          "Properties": null,
+          "Items": null
+        }
+      },
+      "Items": null
+    }
+  }
+}

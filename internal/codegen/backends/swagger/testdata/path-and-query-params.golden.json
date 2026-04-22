@@ -1,0 +1,32 @@
+{
+  "Name": "demo",
+  "Operations": [
+    {
+      "Group": "Users",
+      "OperationID": "User_Get",
+      "Summary": "Get a user.",
+      "Description": "",
+      "Method": "GET",
+      "Path": "/users/{id}",
+      "Parameters": [
+        {
+          "Name": "id",
+          "In": "path",
+          "Required": true,
+          "Type": "string",
+          "Description": ""
+        },
+        {
+          "Name": "limit",
+          "In": "query",
+          "Required": false,
+          "Type": "integer",
+          "Description": "Max rows."
+        }
+      ],
+      "RequestBody": null,
+      "Responses": {}
+    }
+  ],
+  "Schemas": {}
+}

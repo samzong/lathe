@@ -1,0 +1,42 @@
+{
+  "Name": "demo",
+  "Operations": [
+    {
+      "Group": "Users",
+      "OperationID": "Users_CreateUser",
+      "Summary": "",
+      "Description": "",
+      "Method": "POST",
+      "Path": "/users",
+      "Parameters": null,
+      "RequestBody": {
+        "Required": true
+      },
+      "Responses": {
+        "200": {
+          "Schema": {
+            "Ref": "#/definitions/demo.User",
+            "Type": "",
+            "Properties": null,
+            "Items": null
+          }
+        }
+      }
+    }
+  ],
+  "Schemas": {
+    "demo.User": {
+      "Ref": "",
+      "Type": "object",
+      "Properties": {
+        "id": {
+          "Ref": "",
+          "Type": "string",
+          "Properties": null,
+          "Items": null
+        }
+      },
+      "Items": null
+    }
+  }
+}

@@ -1,0 +1,23 @@
+[
+  {
+    "Group": "Items",
+    "Use": "list",
+    "Aliases": null,
+    "Short": "List items.",
+    "Long": "",
+    "Example": "",
+    "Method": "GET",
+    "PathTpl": "/items",
+    "Params": null,
+    "HasBody": false,
+    "BodyRequired": false,
+    "Output": {
+      "ListPath": "items",
+      "DefaultColumns": [
+        "name",
+        "id",
+        "age"
+      ]
+    }
+  }
+]

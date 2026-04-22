@@ -1,0 +1,17 @@
+{
+  "Name": "demo",
+  "Operations": [
+    {
+      "Group": "",
+      "OperationID": "Health_Check",
+      "Summary": "Health check.",
+      "Description": "",
+      "Method": "GET",
+      "Path": "/health",
+      "Parameters": null,
+      "RequestBody": null,
+      "Responses": {}
+    }
+  ],
+  "Schemas": {}
+}

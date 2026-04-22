@@ -1,0 +1,36 @@
+[
+  {
+    "Group": "Resources",
+    "Use": "create",
+    "Aliases": null,
+    "Short": "Create a resource.",
+    "Long": "",
+    "Example": "",
+    "Method": "POST",
+    "PathTpl": "/resources",
+    "Params": null,
+    "HasBody": true,
+    "BodyRequired": true,
+    "Output": {
+      "ListPath": "",
+      "DefaultColumns": null
+    }
+  },
+  {
+    "Group": "Resources",
+    "Use": "list",
+    "Aliases": null,
+    "Short": "List resources.",
+    "Long": "",
+    "Example": "",
+    "Method": "GET",
+    "PathTpl": "/resources",
+    "Params": null,
+    "HasBody": false,
+    "BodyRequired": false,
+    "Output": {
+      "ListPath": "",
+      "DefaultColumns": null
+    }
+  }
+]

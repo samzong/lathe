@@ -1,0 +1,28 @@
+[
+  {
+    "Group": "Users",
+    "Use": "patch-user",
+    "Aliases": null,
+    "Short": "Patch a user.",
+    "Long": "",
+    "Example": "",
+    "Method": "PATCH",
+    "PathTpl": "/users/{id}",
+    "Params": [
+      {
+        "Name": "id",
+        "Flag": "id",
+        "In": "path",
+        "GoType": "string",
+        "Help": "id (path, required)",
+        "Required": true
+      }
+    ],
+    "HasBody": true,
+    "BodyRequired": false,
+    "Output": {
+      "ListPath": "",
+      "DefaultColumns": null
+    }
+  }
+]

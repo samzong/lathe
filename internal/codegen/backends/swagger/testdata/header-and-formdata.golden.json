@@ -1,0 +1,32 @@
+{
+  "Name": "demo",
+  "Operations": [
+    {
+      "Group": "Uploads",
+      "OperationID": "Uploads_Create",
+      "Summary": "Upload a file.",
+      "Description": "",
+      "Method": "POST",
+      "Path": "/uploads",
+      "Parameters": [
+        {
+          "Name": "X-Request-Id",
+          "In": "header",
+          "Required": false,
+          "Type": "string",
+          "Description": "Trace id."
+        },
+        {
+          "Name": "file",
+          "In": "formData",
+          "Required": true,
+          "Type": "string",
+          "Description": "Binary content."
+        }
+      ],
+      "RequestBody": null,
+      "Responses": {}
+    }
+  ],
+  "Schemas": {}
+}

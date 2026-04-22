@@ -1,0 +1,19 @@
+[
+  {
+    "Group": "Users",
+    "Use": "create-user",
+    "Aliases": null,
+    "Short": "Create a user.",
+    "Long": "",
+    "Example": "",
+    "Method": "POST",
+    "PathTpl": "/users",
+    "Params": null,
+    "HasBody": true,
+    "BodyRequired": true,
+    "Output": {
+      "ListPath": "",
+      "DefaultColumns": null
+    }
+  }
+]

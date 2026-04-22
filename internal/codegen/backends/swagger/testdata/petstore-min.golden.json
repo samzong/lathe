@@ -1,0 +1,79 @@
+{
+  "Name": "demo",
+  "Operations": [
+    {
+      "Group": "Pets",
+      "OperationID": "Pet_List",
+      "Summary": "List pets.",
+      "Description": "",
+      "Method": "GET",
+      "Path": "/pets",
+      "Parameters": null,
+      "RequestBody": null,
+      "Responses": {
+        "200": {
+          "Schema": {
+            "Ref": "",
+            "Type": "array",
+            "Properties": null,
+            "Items": {
+              "Ref": "#/definitions/Pet",
+              "Type": "",
+              "Properties": null,
+              "Items": null
+            }
+          }
+        }
+      }
+    },
+    {
+      "Group": "Pets",
+      "OperationID": "Pet_Get",
+      "Summary": "Get one pet.",
+      "Description": "",
+      "Method": "GET",
+      "Path": "/pets/{id}",
+      "Parameters": [
+        {
+          "Name": "id",
+          "In": "path",
+          "Required": true,
+          "Type": "string",
+          "Description": ""
+        }
+      ],
+      "RequestBody": null,
+      "Responses": {
+        "200": {
+          "Schema": {
+            "Ref": "#/definitions/Pet",
+            "Type": "",
+            "Properties": null,
+            "Items": null
+          }
+        }
+      }
+    }
+  ],
+  "Schemas": {
+    "Pet": {
+      "Ref": "",
+      "Type": "object",
+      "Properties": {
+        "id": {
+          "Ref": "",
+          "Type": "integer",
+          "Properties": null,
+          "Items": null
+        },
+        "name": {
+          "Ref": "",
+          "Type": "string",
+          "Properties": null,
+          "Items": null
+        }
+      },
+      "Items": null
+    }
+  }
+}
