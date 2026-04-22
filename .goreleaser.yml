@@ -1,0 +1,39 @@
+version: 2
+
+project_name: lathe
+
+builds:
+  - skip: true
+
+# lathe is a library/template — downstream projects build their own binary.
+# This goreleaser config packages source archives and creates GitHub releases
+# with changelogs so downstream consumers can pin lathe versions.
+
+archives:
+  - format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_source"
+    files:
+      - LICENSE
+      - README.md
+      - pkg/**/*
+      - internal/**/*
+      - cmd/**/*
+      - go.mod
+      - go.sum
+      - Makefile
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+      - "^chore:"
+
+release:
+  github:
+    owner: samzong
+    name: lathe
+  prerelease: auto
+  name_template: "{{ .Tag }}"
