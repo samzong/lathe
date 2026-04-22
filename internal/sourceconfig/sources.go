@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -82,6 +83,9 @@ func validate(s *Source) error {
 	if s.PinnedTag == "" {
 		return fmt.Errorf("missing pinned_tag")
 	}
+	if err := validateRef(s.PinnedTag); err != nil {
+		return err
+	}
 	switch s.Backend {
 	case BackendSwagger:
 		if s.Swagger == nil || len(s.Swagger.Files) == 0 {
@@ -106,4 +110,55 @@ func validate(s *Source) error {
 		return fmt.Errorf("unknown backend %q", s.Backend)
 	}
 	return nil
+}
+
+// validateRef rejects pinned_tag values that are obviously floating refs.
+// The repo's README promises that every upstream spec is pinned at an
+// immutable tag; accepting "HEAD" / "main" / "refs/heads/*" would silently
+// break that promise. A 40-char hex string is treated as an explicit SHA.
+// Anything else is checked for a small set of Git-illegal characters so
+// typos fail fast here rather than during checkout.
+func validateRef(ref string) error {
+	if isFloating40Hex := len(ref) == 40 && allHex(ref); isFloating40Hex {
+		return nil
+	}
+	switch ref {
+	case "HEAD", "main", "master":
+		return floatingRefError(ref)
+	}
+	if strings.HasPrefix(ref, "refs/heads/") || strings.HasPrefix(ref, "refs/remotes/") {
+		return floatingRefError(ref)
+	}
+	if strings.HasPrefix(ref, "-") {
+		return floatingRefError(ref)
+	}
+	if strings.ContainsAny(ref, " \t\r\n") {
+		return floatingRefError(ref)
+	}
+	if strings.Contains(ref, "..") {
+		return floatingRefError(ref)
+	}
+	for _, bad := range []string{"~", "^", ":", "?", "*", "[", "\\"} {
+		if strings.Contains(ref, bad) {
+			return floatingRefError(ref)
+		}
+	}
+	return nil
+}
+
+func floatingRefError(ref string) error {
+	return fmt.Errorf("pinned_tag %q looks like a floating ref; only immutable tags or 40-char SHAs are accepted", ref)
+}
+
+func allHex(s string) bool {
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		switch {
+		case c >= '0' && c <= '9':
+		case c >= 'a' && c <= 'f':
+		default:
+			return false
+		}
+	}
+	return true
 }
