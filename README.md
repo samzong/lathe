@@ -7,7 +7,7 @@
 
 Feed lathe a Swagger / OpenAPI 2.0 document or a `.proto` file with `google.api.http` annotations, and it gives you back a single `cobra` binary with per-operation subcommands, hostname-keyed auth, flag-driven request bodies, and table / JSON / YAML output — no hand-written command code.
 
-> Status: v0.x, pre-release. The shape is stable. Details may still shift before v0.1.
+> Status: v0.1-rc. Architecture finalized; version contract and error model in place.
 
 ---
 
@@ -34,7 +34,12 @@ lathe handles everything else.
 - **Body builder** — `--file -` for stdin JSON, `--set spec.replicas=3` for inline dotted-path patches.
 - **Output formats** — `-o table|json|yaml|raw`. Table mode auto-selects columns from the response shape.
 - **Overlay layer** — polish help text and aliases per-module without editing generated code.
-- **Reproducible** — every upstream spec pinned at an immutable tag; floating branches rejected by design.
+- **Reproducible** — every upstream spec pinned at an immutable tag; floating branches rejected by design. Commit SHA recorded and verified.
+- **Extensible auth** — `Authenticator` interface with built-in Bearer and NoAuth; bring your own (API key, mTLS, SigV4).
+- **Extensible output** — `Formatter` registry; built-in table/json/yaml/raw, register custom formatters.
+- **Stable error model** — typed `LatheError` with machine-readable codes, JSON error output (`-o json`), and stable exit codes (0–4).
+- **Debug mode** — `--debug` prints HTTP request/response details to stderr (Authorization redacted).
+- **Version contract** — generated code declares its schema version; runtime rejects mismatches with a clear "re-run codegen" message.
 
 ---
 
@@ -171,6 +176,15 @@ Overrides are baked into the generated `CommandSpec` at codegen time — the run
 | `LATHE_SPECS_CACHE` | Where `make sync-specs` stages specs (default `.cache`) |
 
 `<NAME>` is the uppercased `cli.name`.
+
+### Global flags
+
+| Flag | Effect |
+|---|---|
+| `--hostname` | Select host for this invocation |
+| `-o, --output` | Output format: `table\|json\|yaml\|raw` |
+| `--insecure` | Skip TLS certificate verification |
+| `--debug` | Print HTTP request/response to stderr |
 
 ---
 
