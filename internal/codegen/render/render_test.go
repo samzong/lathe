@@ -44,6 +44,8 @@ func TestRenderModule_AppliesOverlay(t *testing.T) {
 		`"myctl demo install-addon --name foo"`,
 		`"addon-install"`,
 		`"untouched short"`,
+		`generatedSchemaVersion`,
+		`runtime.AssertSchema`,
 	} {
 		if !strings.Contains(got, want) {
 			t.Errorf("output missing %q", want)

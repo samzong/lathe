@@ -18,9 +18,10 @@ const (
 )
 
 type moduleCtx struct {
-	Module     string
-	RuntimePkg string
-	Ops        []runtime.CommandSpec
+	Module        string
+	RuntimePkg    string
+	SchemaVersion int
+	Ops           []runtime.CommandSpec
 }
 
 // RuntimePkg is the import path downstream-generated modules use to reach
@@ -55,9 +56,10 @@ func RenderModule(name string, specs []runtime.CommandSpec, overrides map[string
 	}
 	var buf strings.Builder
 	ctx := moduleCtx{
-		Module:     name,
-		RuntimePkg: RuntimePkg,
-		Ops:        merged,
+		Module:        name,
+		RuntimePkg:    RuntimePkg,
+		SchemaVersion: runtime.SchemaVersion,
+		Ops:           merged,
 	}
 	if err := moduleTmpl.Execute(&buf, ctx); err != nil {
 		return err
@@ -112,7 +114,10 @@ import (
 	"{{.RuntimePkg}}"
 )
 
+const generatedSchemaVersion = {{.SchemaVersion}}
+
 func Mount(root *cobra.Command) {
+	runtime.AssertSchema(generatedSchemaVersion)
 	runtime.Build(root, {{printf "%q" .Module}}, Specs)
 }
 

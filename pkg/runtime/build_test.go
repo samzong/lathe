@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/spf13/cobra"
@@ -69,6 +70,24 @@ func TestBuild_PopulatesGroupAndOpTree(t *testing.T) {
 	} else if f.Value.Type() != "bool" {
 		t.Errorf("list-items --verbose type = %q, want bool", f.Value.Type())
 	}
+}
+
+func TestAssertSchema_Match(t *testing.T) {
+	AssertSchema(SchemaVersion)
+}
+
+func TestAssertSchema_Mismatch(t *testing.T) {
+	defer func() {
+		r := recover()
+		if r == nil {
+			t.Fatal("expected panic on schema mismatch")
+		}
+		msg, ok := r.(string)
+		if !ok || !strings.Contains(msg, "re-run codegen") {
+			t.Errorf("unexpected panic value: %v", r)
+		}
+	}()
+	AssertSchema(SchemaVersion + 999)
 }
 
 func TestBuild_EmptySpecsMountsEmptyService(t *testing.T) {

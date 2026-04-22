@@ -1,5 +1,7 @@
 package runtime
 
+const SchemaVersion = 1
+
 type CommandSpec struct {
 	Group       string
 	Use         string

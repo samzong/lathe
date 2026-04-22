@@ -15,6 +15,15 @@ import (
 // segregate modules from core commands (e.g. auth) and from completion/help.
 const ModuleGroupID = "modules"
 
+func AssertSchema(generated int) {
+	if generated != SchemaVersion {
+		panic(fmt.Sprintf(
+			"lathe schema mismatch: generated code uses schema %d but runtime expects %d — re-run codegen",
+			generated, SchemaVersion,
+		))
+	}
+}
+
 // Build mounts a service command tree under root, driven entirely by specs.
 // Replaces the previous per-operation function approach: every operation is
 // data, the execution path is a single function.
