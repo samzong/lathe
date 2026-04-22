@@ -11,9 +11,10 @@ import (
 const StateFile = "sync-state.yaml"
 
 type State struct {
-	Source     string `yaml:"source"`
-	Backend    string `yaml:"backend"`
-	SyncedFrom string `yaml:"synced_from"`
+	Source      string `yaml:"source"`
+	Backend     string `yaml:"backend"`
+	SyncedFrom  string `yaml:"synced_from"`
+	ResolvedSHA string `yaml:"resolved_sha"`
 }
 
 func LoadState(syncDir string) (*State, error) {
@@ -52,6 +53,9 @@ func VerifyState(syncDir, source, backend, wantTag string) error {
 	}
 	if s.SyncedFrom != wantTag {
 		return fmt.Errorf("source %q: synced_from=%q but pinned_tag=%q (re-run sync)", source, s.SyncedFrom, wantTag)
+	}
+	if s.ResolvedSHA == "" {
+		return fmt.Errorf("source %q: sync-state missing resolved_sha (re-run `make sync-specs`)", source)
 	}
 	return nil
 }

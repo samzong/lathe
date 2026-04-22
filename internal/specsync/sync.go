@@ -36,7 +36,8 @@ func Sync(cfg *sourceconfig.Config, opts Options) error {
 		if err := os.RemoveAll(syncDir); err != nil {
 			return err
 		}
-		if err := ensureRepo(workDir, src.RepoURL, src.PinnedTag); err != nil {
+		sha, err := ensureRepo(workDir, src.RepoURL, src.PinnedTag)
+		if err != nil {
 			return fmt.Errorf("source %q: %w", src.Name, err)
 		}
 		switch src.Backend {
@@ -52,9 +53,10 @@ func Sync(cfg *sourceconfig.Config, opts Options) error {
 			return fmt.Errorf("source %q: unsupported backend %q", src.Name, src.Backend)
 		}
 		if err := SaveState(syncDir, &State{
-			Source:     src.Name,
-			Backend:    src.Backend,
-			SyncedFrom: src.PinnedTag,
+			Source:      src.Name,
+			Backend:     src.Backend,
+			SyncedFrom:  src.PinnedTag,
+			ResolvedSHA: sha,
 		}); err != nil {
 			return fmt.Errorf("source %q: write sync-state: %w", src.Name, err)
 		}
