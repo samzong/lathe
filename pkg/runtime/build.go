@@ -47,7 +47,7 @@ func buildCmd(s CommandSpec) *cobra.Command {
 		Long:    s.Long,
 		Example: s.Example,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			hostname, token, clientOpts, err := LoadHostOptions(cmd)
+			hostname, clientOpts, err := LoadHostOptions(cmd)
 			if err != nil {
 				return err
 			}
@@ -125,7 +125,7 @@ func buildCmd(s CommandSpec) *cobra.Command {
 			}
 
 			clientOpts.Headers = hdrs
-			data, err := DoRaw(cmd.Context(), hostname, token, s.Method, path, body, clientOpts)
+			data, err := DoRaw(cmd.Context(), hostname, s.Method, path, body, clientOpts)
 			if err != nil {
 				return err
 			}

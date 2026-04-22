@@ -30,7 +30,8 @@ func validateToken(ctx context.Context, hostname, token string, v *config.AuthVa
 	if method == "" {
 		method = "GET"
 	}
-	data, err := runtime.DoRaw(ctx, hostname, token, method, v.Path, nil, opts)
+	opts.Auth = runtime.BearerAuth{Token: token}
+	data, err := runtime.DoRaw(ctx, hostname, method, v.Path, nil, opts)
 	if err != nil {
 		return validateResult{}, err
 	}

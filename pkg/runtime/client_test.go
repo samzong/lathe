@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 	"time"
 )
@@ -22,7 +23,7 @@ func TestDoRaw_SendsMethodPathAndQuery(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	data, err := DoRaw(context.Background(), srv.URL, "", "GET", "/users?limit=5", nil, ClientOptions{Timeout: 5 * time.Second})
+	data, err := DoRaw(context.Background(), srv.URL, "GET", "/users?limit=5", nil, ClientOptions{Timeout: 5 * time.Second})
 	if err != nil {
 		t.Fatalf("DoRaw: %v", err)
 	}
@@ -51,7 +52,7 @@ func TestDoRaw_SendsAuthorizationWhenTokenProvided(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	if _, err := DoRaw(context.Background(), srv.URL, "sekret", "GET", "/x", nil, ClientOptions{Timeout: 5 * time.Second}); err != nil {
+	if _, err := DoRaw(context.Background(), srv.URL, "GET", "/x", nil, ClientOptions{Auth: BearerAuth{Token: "sekret"}, Timeout: 5 * time.Second}); err != nil {
 		t.Fatalf("DoRaw: %v", err)
 	}
 	if gotAuth != "Bearer sekret" {
@@ -66,7 +67,7 @@ func TestDoRaw_4xxReturnsHTTPError(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	_, err := DoRaw(context.Background(), srv.URL, "", "GET", "/missing", nil, ClientOptions{Timeout: 5 * time.Second})
+	_, err := DoRaw(context.Background(), srv.URL, "GET", "/missing", nil, ClientOptions{Timeout: 5 * time.Second})
 	var he *HTTPError
 	if !errors.As(err, &he) {
 		t.Fatalf("want *HTTPError, got %T: %v", err, err)
@@ -88,7 +89,7 @@ func TestDoRaw_401IsNotErrNotAuthenticated(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	_, err := DoRaw(context.Background(), srv.URL, "", "GET", "/x", nil, ClientOptions{Timeout: 5 * time.Second})
+	_, err := DoRaw(context.Background(), srv.URL, "GET", "/x", nil, ClientOptions{Timeout: 5 * time.Second})
 	if errors.Is(err, ErrNotAuthenticated) {
 		t.Errorf("HTTP 401 must not wrap ErrNotAuthenticated: %v", err)
 	}
@@ -109,7 +110,7 @@ func TestDoRaw_EncodesJSONBody(t *testing.T) {
 	defer srv.Close()
 
 	body := map[string]any{"name": "alice"}
-	if _, err := DoRaw(context.Background(), srv.URL, "", "POST", "/users", body, ClientOptions{Timeout: 5 * time.Second}); err != nil {
+	if _, err := DoRaw(context.Background(), srv.URL, "POST", "/users", body, ClientOptions{Timeout: 5 * time.Second}); err != nil {
 		t.Fatalf("DoRaw: %v", err)
 	}
 	if gotContentType != "application/json" {
@@ -117,5 +118,27 @@ func TestDoRaw_EncodesJSONBody(t *testing.T) {
 	}
 	if string(gotBody) != `{"name":"alice"}` {
 		t.Errorf("body = %s", gotBody)
+	}
+}
+
+func TestDoRaw_EncodesFormBody(t *testing.T) {
+	var gotContentType string
+	var gotBody []byte
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotContentType = r.Header.Get("Content-Type")
+		gotBody, _ = io.ReadAll(r.Body)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+
+	form := url.Values{"name": {"alice"}, "age": {"30"}}
+	if _, err := DoRaw(context.Background(), srv.URL, "POST", "/upload", form, ClientOptions{Timeout: 5 * time.Second}); err != nil {
+		t.Fatalf("DoRaw: %v", err)
+	}
+	if gotContentType != "application/x-www-form-urlencoded" {
+		t.Errorf("Content-Type = %q, want application/x-www-form-urlencoded", gotContentType)
+	}
+	if string(gotBody) != form.Encode() {
+		t.Errorf("body = %q, want %q", gotBody, form.Encode())
 	}
 }

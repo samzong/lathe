@@ -47,26 +47,30 @@ func ResolveHost(cmd *cobra.Command) (string, error) {
 	}
 }
 
-// LoadHostOptions resolves hostname, token, and client options for the
-// current command in one call. The persistent --insecure flag forces insecure
-// when set; otherwise the host record's persisted Insecure value applies.
-func LoadHostOptions(cmd *cobra.Command) (string, string, ClientOptions, error) {
+// LoadHostOptions resolves hostname and client options (including auth) for
+// the current command in one call. The persistent --insecure flag forces
+// insecure when set; otherwise the host record's persisted Insecure value
+// applies.
+func LoadHostOptions(cmd *cobra.Command) (string, ClientOptions, error) {
 	hostname, err := ResolveHost(cmd)
 	if err != nil {
-		return "", "", ClientOptions{}, err
+		return "", ClientOptions{}, err
 	}
 	hosts, err := config.LoadHosts()
 	if err != nil {
-		return "", "", ClientOptions{}, err
+		return "", ClientOptions{}, err
 	}
 	e, ok := hosts.Get(hostname)
 	if !ok {
 		name := config.Active().CLI.Name
-		return "", "", ClientOptions{}, fmt.Errorf("not authenticated to %s (run: %s auth login --hostname %s)", hostname, name, hostname)
+		return "", ClientOptions{}, fmt.Errorf("not authenticated to %s (run: %s auth login --hostname %s)", hostname, name, hostname)
 	}
-	opts := ClientOptions{Insecure: e.Insecure}
+	opts := ClientOptions{
+		Auth:     BearerAuth{Token: e.OAuthToken},
+		Insecure: e.Insecure,
+	}
 	if v, err := cmd.Root().PersistentFlags().GetBool("insecure"); err == nil && v {
 		opts.Insecure = true
 	}
-	return hostname, e.OAuthToken, opts, nil
+	return hostname, opts, nil
 }

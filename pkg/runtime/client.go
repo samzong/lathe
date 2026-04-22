@@ -14,9 +14,11 @@ import (
 )
 
 type ClientOptions struct {
-	Insecure bool
-	Timeout  time.Duration
-	Headers  map[string]string
+	Auth      Authenticator
+	Transport http.RoundTripper
+	Insecure  bool
+	Timeout   time.Duration
+	Headers   map[string]string
 }
 
 // BaseURL normalizes a user-facing hostname into an absolute URL base.
@@ -39,21 +41,23 @@ func HTTPClient(opts ClientOptions) *http.Client {
 	if timeout == 0 {
 		timeout = 30 * time.Second
 	}
-	var tlsCfg *tls.Config
-	if opts.Insecure {
-		tlsCfg = &tls.Config{InsecureSkipVerify: true}
+	transport := opts.Transport
+	if transport == nil {
+		var tlsCfg *tls.Config
+		if opts.Insecure {
+			tlsCfg = &tls.Config{InsecureSkipVerify: true}
+		}
+		transport = &http.Transport{TLSClientConfig: tlsCfg}
 	}
 	return &http.Client{
-		Timeout: timeout,
-		Transport: &http.Transport{
-			TLSClientConfig: tlsCfg,
-		},
+		Timeout:   timeout,
+		Transport: transport,
 	}
 }
 
 // DoRaw executes an authenticated HTTP request and returns the raw response body.
 // body may be nil, []byte (sent as-is with application/json), or any value that encodes to JSON.
-func DoRaw(ctx context.Context, hostname, token, method, path string, body any, opts ClientOptions) ([]byte, error) {
+func DoRaw(ctx context.Context, hostname, method, path string, body any, opts ClientOptions) ([]byte, error) {
 	base, err := BaseURL(hostname)
 	if err != nil {
 		return nil, err
@@ -84,8 +88,10 @@ func DoRaw(ctx context.Context, hostname, token, method, path string, body any, 
 	if err != nil {
 		return nil, err
 	}
-	if token != "" {
-		req.Header.Set("Authorization", "Bearer "+token)
+	if opts.Auth != nil {
+		if err := opts.Auth.Apply(req); err != nil {
+			return nil, fmt.Errorf("apply auth: %w", err)
+		}
 	}
 	req.Header.Set("Accept", "application/json")
 	if contentType != "" {
