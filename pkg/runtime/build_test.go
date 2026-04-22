@@ -83,12 +83,11 @@ func TestBuild_EmptySpecsMountsEmptyService(t *testing.T) {
 
 func TestBuild_BodyFlagsAttachedWhenHasBody(t *testing.T) {
 	specs := []CommandSpec{{
-		Group:        "Users",
-		Use:          "create-user",
-		Method:       "POST",
-		PathTpl:      "/users",
-		HasBody:      true,
-		BodyRequired: true,
+		Group:       "Users",
+		Use:         "create-user",
+		Method:      "POST",
+		PathTpl:     "/users",
+		RequestBody: &RequestBody{Required: true},
 	}}
 
 	root := newRootWithModuleGroup()

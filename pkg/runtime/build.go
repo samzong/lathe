@@ -54,10 +54,32 @@ func buildCmd(s CommandSpec) *cobra.Command {
 
 			path := s.PathTpl
 			q := url.Values{}
+			hdrs := map[string]string{}
+			form := url.Values{}
 			for _, p := range s.Params {
-				if p.In == InPath {
+				switch p.In {
+				case InPath:
 					v := vals[p.Name].(*string)
 					path = strings.Replace(path, "{"+p.Name+"}", url.PathEscape(*v), 1)
+					continue
+				case InHeader:
+					if !cmd.Flags().Changed(p.Flag) {
+						continue
+					}
+					hdrs[p.Name] = *vals[p.Name].(*string)
+					continue
+				case InFormData:
+					if !cmd.Flags().Changed(p.Flag) {
+						continue
+					}
+					switch v := vals[p.Name].(type) {
+					case *int64:
+						form.Set(p.Name, strconv.FormatInt(*v, 10))
+					case *bool:
+						form.Set(p.Name, strconv.FormatBool(*v))
+					case *string:
+						form.Set(p.Name, *v)
+					}
 					continue
 				}
 				if !cmd.Flags().Changed(p.Flag) {
@@ -81,7 +103,9 @@ func buildCmd(s CommandSpec) *cobra.Command {
 			}
 
 			var body any
-			if s.HasBody {
+			if len(form) > 0 {
+				body = form
+			} else if s.RequestBody != nil {
 				switch {
 				case cmd.Flags().Changed("set"):
 					raw, berr := BuildBodyFromSet(bodySets)
@@ -95,11 +119,12 @@ func buildCmd(s CommandSpec) *cobra.Command {
 						return rerr
 					}
 					body = raw
-				case s.BodyRequired:
+				case s.RequestBody.Required:
 					return fmt.Errorf("request body required: pass --file or --set")
 				}
 			}
 
+			clientOpts.Headers = hdrs
 			data, err := DoRaw(cmd.Context(), hostname, token, s.Method, path, body, clientOpts)
 			if err != nil {
 				return err
@@ -140,15 +165,19 @@ func buildCmd(s CommandSpec) *cobra.Command {
 			_ = cmd.MarkFlagRequired(p.Flag)
 		}
 	}
-	if s.HasBody {
+	if s.RequestBody != nil {
 		fileHelp := "path to JSON body file, or '-' for stdin"
 		setHelp := "set body field, e.g. --set spec.replicas=3 (repeatable; nested via dots)"
-		if s.BodyRequired {
+		if s.RequestBody.Required {
 			fileHelp += " (use --file or --set)"
 			setHelp += " (use --file or --set)"
 		}
 		cmd.Flags().StringVarP(&bodyFile, "file", "f", "", fileHelp)
 		cmd.Flags().StringSliceVar(&bodySets, "set", nil, setHelp)
+	}
+	cmd.Hidden = s.Hidden
+	if s.Deprecated {
+		cmd.Deprecated = "this command is deprecated"
 	}
 	return cmd
 }

@@ -6,14 +6,20 @@
     "Short": "Create a resource.",
     "Long": "",
     "Example": "",
+    "OperationID": "Resources_Create",
+    "Hidden": false,
+    "Deprecated": false,
     "Method": "POST",
     "PathTpl": "/resources",
     "Params": null,
-    "HasBody": true,
-    "BodyRequired": true,
+    "RequestBody": {
+      "Required": true,
+      "MediaType": ""
+    },
     "Output": {
       "ListPath": "",
-      "DefaultColumns": null
+      "DefaultColumns": null,
+      "ResponseMediaType": ""
     }
   },
   {
@@ -23,14 +29,17 @@
     "Short": "List resources.",
     "Long": "",
     "Example": "",
+    "OperationID": "Resources_List",
+    "Hidden": false,
+    "Deprecated": false,
     "Method": "GET",
     "PathTpl": "/resources",
     "Params": null,
-    "HasBody": false,
-    "BodyRequired": false,
+    "RequestBody": null,
     "Output": {
       "ListPath": "",
-      "DefaultColumns": null
+      "DefaultColumns": null,
+      "ResponseMediaType": ""
     }
   }
 ]

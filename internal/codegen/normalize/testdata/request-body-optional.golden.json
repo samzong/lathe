@@ -6,6 +6,9 @@
     "Short": "Patch a user.",
     "Long": "",
     "Example": "",
+    "OperationID": "Users_PatchUser",
+    "Hidden": false,
+    "Deprecated": false,
     "Method": "PATCH",
     "PathTpl": "/users/{id}",
     "Params": [
@@ -18,11 +21,14 @@
         "Required": true
       }
     ],
-    "HasBody": true,
-    "BodyRequired": false,
+    "RequestBody": {
+      "Required": false,
+      "MediaType": ""
+    },
     "Output": {
       "ListPath": "",
-      "DefaultColumns": null
+      "DefaultColumns": null,
+      "ResponseMediaType": ""
     }
   }
 ]

@@ -6,6 +6,9 @@
     "Short": "Get a user by ID.",
     "Long": "",
     "Example": "",
+    "OperationID": "Users_GetUser",
+    "Hidden": false,
+    "Deprecated": false,
     "Method": "GET",
     "PathTpl": "/users/{id}",
     "Params": [
@@ -26,11 +29,11 @@
         "Required": false
       }
     ],
-    "HasBody": false,
-    "BodyRequired": false,
+    "RequestBody": null,
     "Output": {
       "ListPath": "",
-      "DefaultColumns": null
+      "DefaultColumns": null,
+      "ResponseMediaType": ""
     }
   }
 ]

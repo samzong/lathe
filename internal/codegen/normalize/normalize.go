@@ -28,11 +28,12 @@ func Normalize(mod *rawir.RawModule) []runtime.CommandSpec {
 				continue
 			}
 			spec := runtime.CommandSpec{
-				Group:   group(op),
-				Use:     useName,
-				Short:   pickShort(op),
-				Method:  op.Method,
-				PathTpl: op.Path,
+				Group:       group(op),
+				Use:         useName,
+				Short:       pickShort(op),
+				OperationID: op.OperationID,
+				Method:      op.Method,
+				PathTpl:     op.Path,
 			}
 			for _, pp := range op.Parameters {
 				switch pp.In {
@@ -40,11 +41,14 @@ func Normalize(mod *rawir.RawModule) []runtime.CommandSpec {
 					spec.Params = append(spec.Params, pathParam(pp))
 				case "query":
 					spec.Params = append(spec.Params, queryParam(pp))
+				case "header":
+					spec.Params = append(spec.Params, headerParam(pp))
+				case "formData":
+					spec.Params = append(spec.Params, formDataParam(pp))
 				}
 			}
 			if op.RequestBody != nil {
-				spec.HasBody = true
-				spec.BodyRequired = op.RequestBody.Required
+				spec.RequestBody = &runtime.RequestBody{Required: op.RequestBody.Required}
 			}
 			lp, itemRef := deriveList(op, mod.Schemas)
 			spec.Output.ListPath = lp
@@ -165,6 +169,36 @@ func queryParam(p rawir.RawParameter) runtime.ParamSpec {
 		ps.GoType = "bool"
 	case "array":
 		ps.GoType = "[]string"
+	default:
+		ps.GoType = "string"
+	}
+	return ps
+}
+
+func headerParam(p rawir.RawParameter) runtime.ParamSpec {
+	return runtime.ParamSpec{
+		Name:     p.Name,
+		Flag:     camelToKebab(p.Name),
+		In:       "header",
+		GoType:   "string",
+		Help:     helpText(p),
+		Required: p.Required,
+	}
+}
+
+func formDataParam(p rawir.RawParameter) runtime.ParamSpec {
+	ps := runtime.ParamSpec{
+		Name:     p.Name,
+		Flag:     camelToKebab(p.Name),
+		In:       "formData",
+		Help:     helpText(p),
+		Required: p.Required,
+	}
+	switch p.Type {
+	case "integer":
+		ps.GoType = "int64"
+	case "boolean":
+		ps.GoType = "bool"
 	default:
 		ps.GoType = "string"
 	}

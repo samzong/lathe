@@ -112,30 +112,36 @@ import (
 	"{{.RuntimePkg}}"
 )
 
-// Mount mounts the {{.Module}} command tree under root.
 func Mount(root *cobra.Command) {
 	runtime.Build(root, {{printf "%q" .Module}}, Specs)
 }
 
-// Specs declares every {{.Module}} command as data. The generic runner in
-// lathe's pkg/runtime consumes this slice at startup.
 var Specs = []runtime.CommandSpec{
 {{- range $op := .Ops}}
 	{
-		Group:   {{printf "%q" $op.Group}},
-		Use:     {{printf "%q" $op.Use}},
+		Group:       {{printf "%q" $op.Group}},
+		Use:         {{printf "%q" $op.Use}},
 		{{- if $op.Aliases}}
-		Aliases: []string{ {{- range $op.Aliases}}{{printf "%q" .}}, {{end -}} },
+		Aliases:     []string{ {{- range $op.Aliases}}{{printf "%q" .}}, {{end -}} },
 		{{- end}}
-		Short:   {{printf "%q" $op.Short}},
+		Short:       {{printf "%q" $op.Short}},
 		{{- if $op.Long}}
-		Long:    {{printf "%q" $op.Long}},
+		Long:        {{printf "%q" $op.Long}},
 		{{- end}}
 		{{- if $op.Example}}
-		Example: {{printf "%q" $op.Example}},
+		Example:     {{printf "%q" $op.Example}},
 		{{- end}}
-		Method:  {{printf "%q" $op.Method}},
-		PathTpl: {{printf "%q" $op.PathTpl}},
+		{{- if $op.OperationID}}
+		OperationID: {{printf "%q" $op.OperationID}},
+		{{- end}}
+		{{- if $op.Hidden}}
+		Hidden:      true,
+		{{- end}}
+		{{- if $op.Deprecated}}
+		Deprecated:  true,
+		{{- end}}
+		Method:      {{printf "%q" $op.Method}},
+		PathTpl:     {{printf "%q" $op.PathTpl}},
 		{{- if $op.Params}}
 		Params: []runtime.ParamSpec{
 			{{- range $op.Params}}
@@ -143,18 +149,21 @@ var Specs = []runtime.CommandSpec{
 			{{- end}}
 		},
 		{{- end}}
-		{{- if $op.HasBody}}
-		HasBody: true,
-		{{- if $op.BodyRequired}}
-		BodyRequired: true,
+		{{- if $op.RequestBody}}
+		RequestBody: &runtime.RequestBody{
+			Required: {{$op.RequestBody.Required}},
+			{{- if $op.RequestBody.MediaType}}
+			MediaType: {{printf "%q" $op.RequestBody.MediaType}},
+			{{- end}}
+		},
 		{{- end}}
-		{{- end}}
-		{{- if or $op.Output.ListPath $op.Output.DefaultColumns}}
+		{{- if or $op.Output.ListPath $op.Output.DefaultColumns $op.Output.ResponseMediaType}}
 		Output: runtime.OutputHints{
 			{{- if $op.Output.ListPath}}ListPath: {{printf "%q" $op.Output.ListPath}},{{end}}
 			{{- if $op.Output.DefaultColumns}}DefaultColumns: []string{
 				{{- range $op.Output.DefaultColumns}}{{printf "%q" .}},{{end}}
 			},{{end}}
+			{{- if $op.Output.ResponseMediaType}}ResponseMediaType: {{printf "%q" $op.Output.ResponseMediaType}},{{end}}
 		},
 		{{- end}}
 	},

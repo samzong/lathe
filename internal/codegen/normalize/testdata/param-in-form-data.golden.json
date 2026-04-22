@@ -1,0 +1,31 @@
+[
+  {
+    "Group": "Uploads",
+    "Use": "create",
+    "Aliases": null,
+    "Short": "Upload a file.",
+    "Long": "",
+    "Example": "",
+    "OperationID": "Uploads_Create",
+    "Hidden": false,
+    "Deprecated": false,
+    "Method": "POST",
+    "PathTpl": "/uploads",
+    "Params": [
+      {
+        "Name": "file",
+        "Flag": "file",
+        "In": "formData",
+        "GoType": "string",
+        "Help": "Binary content. (formData, required)",
+        "Required": true
+      }
+    ],
+    "RequestBody": null,
+    "Output": {
+      "ListPath": "",
+      "DefaultColumns": null,
+      "ResponseMediaType": ""
+    }
+  }
+]

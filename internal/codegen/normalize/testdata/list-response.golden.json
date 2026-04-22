@@ -6,18 +6,21 @@
     "Short": "List items.",
     "Long": "",
     "Example": "",
+    "OperationID": "Items_List",
+    "Hidden": false,
+    "Deprecated": false,
     "Method": "GET",
     "PathTpl": "/items",
     "Params": null,
-    "HasBody": false,
-    "BodyRequired": false,
+    "RequestBody": null,
     "Output": {
       "ListPath": "items",
       "DefaultColumns": [
         "name",
         "id",
         "age"
-      ]
+      ],
+      "ResponseMediaType": ""
     }
   }
 ]

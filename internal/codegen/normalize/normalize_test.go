@@ -22,8 +22,8 @@ func TestNormalize_Golden(t *testing.T) {
 		{"list-response", listResponse},
 		{"no-op-id", noOpID},
 		{"multiple-methods-same-path", multipleMethodsSamePath},
-		{"param-in-header-dropped", paramInHeaderDropped},
-		{"param-in-form-data-dropped", paramInFormDataDropped},
+		{"param-in-header", paramInHeader},
+		{"param-in-form-data", paramInFormData},
 	}
 
 	for _, tc := range cases {
@@ -163,7 +163,7 @@ func multipleMethodsSamePath() *rawir.RawModule {
 	}
 }
 
-func paramInHeaderDropped() *rawir.RawModule {
+func paramInHeader() *rawir.RawModule {
 	return &rawir.RawModule{
 		Name: "demo",
 		Operations: []rawir.RawOperation{{
@@ -181,7 +181,7 @@ func paramInHeaderDropped() *rawir.RawModule {
 	}
 }
 
-func paramInFormDataDropped() *rawir.RawModule {
+func paramInFormData() *rawir.RawModule {
 	return &rawir.RawModule{
 		Name: "demo",
 		Operations: []rawir.RawOperation{{

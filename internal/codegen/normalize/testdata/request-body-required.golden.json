@@ -6,14 +6,20 @@
     "Short": "Create a user.",
     "Long": "",
     "Example": "",
+    "OperationID": "Users_CreateUser",
+    "Hidden": false,
+    "Deprecated": false,
     "Method": "POST",
     "PathTpl": "/users",
     "Params": null,
-    "HasBody": true,
-    "BodyRequired": true,
+    "RequestBody": {
+      "Required": true,
+      "MediaType": ""
+    },
     "Output": {
       "ListPath": "",
-      "DefaultColumns": null
+      "DefaultColumns": null,
+      "ResponseMediaType": ""
     }
   }
 ]

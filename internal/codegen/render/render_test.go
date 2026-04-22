@@ -17,7 +17,7 @@ func TestRenderModule_AppliesOverlay(t *testing.T) {
 	}
 
 	specs := []runtime.CommandSpec{
-		{Group: "Addon", Use: "install-addon", Short: "raw short", Method: "POST", PathTpl: "/api/v1/addon"},
+		{Group: "Addon", Use: "install-addon", Short: "raw short", Method: "POST", PathTpl: "/api/v1/addon", RequestBody: &runtime.RequestBody{Required: true}},
 		{Group: "Addon", Use: "untouched", Short: "untouched short", Method: "GET", PathTpl: "/api/v1/x"},
 	}
 	overrides := map[string]overlay.Override{

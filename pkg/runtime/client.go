@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -15,6 +16,7 @@ import (
 type ClientOptions struct {
 	Insecure bool
 	Timeout  time.Duration
+	Headers  map[string]string
 }
 
 // BaseURL normalizes a user-facing hostname into an absolute URL base.
@@ -65,6 +67,9 @@ func DoRaw(ctx context.Context, hostname, token, method, path string, body any, 
 		case []byte:
 			reader = bytes.NewReader(b)
 			contentType = "application/json"
+		case url.Values:
+			reader = strings.NewReader(b.Encode())
+			contentType = "application/x-www-form-urlencoded"
 		default:
 			raw, err := json.Marshal(b)
 			if err != nil {
@@ -85,6 +90,9 @@ func DoRaw(ctx context.Context, hostname, token, method, path string, body any, 
 	req.Header.Set("Accept", "application/json")
 	if contentType != "" {
 		req.Header.Set("Content-Type", contentType)
+	}
+	for k, v := range opts.Headers {
+		req.Header.Set(k, v)
 	}
 
 	resp, err := HTTPClient(opts).Do(req)
