@@ -14,12 +14,14 @@ import (
 )
 
 type ClientOptions struct {
-	Auth      Authenticator
-	Transport http.RoundTripper
-	Insecure  bool
-	Timeout   time.Duration
-	Headers   map[string]string
-	Debug     bool
+	Auth       Authenticator
+	Transport  http.RoundTripper
+	Insecure   bool
+	Timeout    time.Duration
+	Headers    map[string]string
+	Debug      bool
+	MaxRetries int
+	UserAgent  string
 }
 
 // BaseURL normalizes a user-facing hostname into an absolute URL base.
@@ -49,6 +51,13 @@ func HTTPClient(opts ClientOptions) *http.Client {
 			tlsCfg = &tls.Config{InsecureSkipVerify: true}
 		}
 		transport = &http.Transport{TLSClientConfig: tlsCfg}
+	}
+	maxRetries := opts.MaxRetries
+	if maxRetries == 0 {
+		maxRetries = 3
+	}
+	if maxRetries > 0 {
+		transport = &retryTransport{inner: transport, maxRetries: maxRetries}
 	}
 	if opts.Debug {
 		transport = &debugTransport{inner: transport}
@@ -98,6 +107,9 @@ func DoRaw(ctx context.Context, hostname, method, path string, body any, opts Cl
 		}
 	}
 	req.Header.Set("Accept", "application/json")
+	if opts.UserAgent != "" {
+		req.Header.Set("User-Agent", opts.UserAgent)
+	}
 	if contentType != "" {
 		req.Header.Set("Content-Type", contentType)
 	}
