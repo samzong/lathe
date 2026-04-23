@@ -1,3 +1,5 @@
+[English](README.md) | [中文](README_zh.md)
+
 # lathe
 
 > Turn any API spec into a polished CLI.
@@ -7,7 +9,7 @@
 
 Feed lathe a Swagger 2.0, OpenAPI 3, or `.proto` file with `google.api.http` annotations, and it gives you back a single `cobra` binary with per-operation subcommands, hostname-keyed auth, flag-driven request bodies, and table / JSON / YAML output — no hand-written command code.
 
-> Status: v0.1 feature-complete. Three backends, full IR pipeline, security scopes, pagination, streaming, overlay system.
+![lathe architecture](docs/images/architecture.png)
 
 ---
 
@@ -29,39 +31,13 @@ lathe handles everything else.
 
 ## Features
 
-- **Three native backends** — Swagger 2.0, OpenAPI 3, and `.proto` (with `google.api.http`). Each spec consumed in its real form; no cross-transcoding.
-- **Hostname-keyed auth**, modeled on `gh` — per-host credentials, no ambient "current context". Select with `--hostname`, `$<NAME>_HOST`, or auto-select when only one host exists.
-- **Body builder** — `--file -` for stdin JSON, `--set spec.replicas=3` for inline dotted-path patches.
-- **Output formats** — `-o table|json|yaml|raw`. Table mode auto-selects columns from the response shape.
-- **Overlay layer** — polish help text and aliases per-module without editing generated code.
-- **Reproducible** — every upstream spec pinned at an immutable tag; floating branches rejected by design. Commit SHA recorded and verified.
-- **Per-operation security** — public endpoints skip auth automatically; scoped endpoints display required OAuth scopes in `--help`.
-- **Pagination** — cursor-based pagination walking with `--all` / `--max-pages`; strategy and field mapping declared in the spec.
-- **Streaming** — Server-Sent Events via `text/event-stream`; chunked response handling.
-- **Rich parameters** — enum validation with shell completion, default values, format hints (`uuid`, `date-time`), parameter-level deprecation warnings.
-- **Extensible auth** — `Authenticator` interface with built-in Bearer and NoAuth; bring your own (API key, mTLS, SigV4).
-- **Extensible output** — `Formatter` registry; built-in table/json/yaml/raw, register custom formatters.
-- **Stable error model** — typed `LatheError` with machine-readable codes, JSON error output (`-o json`), and stable exit codes (0–4).
-- **Debug mode** — `--debug` prints HTTP request/response details to stderr (Authorization redacted).
-- **Version contract** — generated code declares its schema version; runtime rejects mismatches with a clear "re-run codegen" message.
-
----
-
-## How it works
-
-```mermaid
-flowchart LR
-    A[specs/sources.yaml<br/>pinned tags] -->|make sync-specs| B[(local cache)]
-    B -->|make gen| C[generated Go]
-    C -->|go build| D[single binary]
-
-    style A fill:#f3f4f6,stroke:#6b7280
-    style D fill:#dcfce7,stroke:#16a34a
-```
-
-Two commands drive the loop. Neither runs at `go build` time — downstream binaries have no codegen dependency at install.
-
-For the full package layout, add-a-module workflow, and request lifecycle with diagrams, see [docs/architecture.md](docs/architecture.md).
+- **Three native backends** — Swagger 2.0, OpenAPI 3, and `.proto` (with `google.api.http`). Each consumed in its real form; no cross-transcoding.
+- **Reproducible** — every spec pinned at an immutable tag; floating branches rejected. Commit SHA recorded and verified.
+- **Hostname-keyed auth** — per-host credentials modeled on `gh`. Public endpoints skip auth; scoped endpoints show required OAuth scopes.
+- **Rich CLI** — body builder (`--file`, `--set`), `-o table|json|yaml|raw`, enum validation, cursor-based pagination (`--all`), SSE streaming, parameter defaults and deprecation warnings.
+- **Overlay layer** — polish help text, aliases, and examples per-module without editing generated code.
+- **Extensible** — `Authenticator` and `Formatter` interfaces for custom auth schemes and output formats.
+- **Production-ready** — typed error model with stable exit codes (0–4), `--debug` HTTP tracing, schema version contract between generated code and runtime.
 
 ---
 
@@ -117,6 +93,26 @@ sources:
         - api/openapi.yaml
 ```
 
+### `internal/overlay/<module>.yaml` — polish help text (optional)
+
+```yaml
+# internal/overlay/iam.yaml
+commands:
+  create-user:
+    short: "Create a user in the IAM service"
+    aliases: [adduser]
+    example: |
+      acmectl iam create-user \
+        --email alice@example.com \
+        --role viewer
+    params:
+      role:
+        help: "User role (viewer, editor, admin)"
+        default: viewer
+```
+
+Overlays are baked into generated code at codegen time — the runtime knows nothing about them. Pass `-overlay internal/overlay` to codegen.
+
 ### Build
 
 ```sh
@@ -149,34 +145,6 @@ Grouping into subcommand trees:
 
 - **Swagger / OpenAPI 3** — uses the operation's first `tag`.
 - **Proto** — uses the `service` name.
-
----
-
-## Overlay layer
-
-Where a spec's `summary` / `description` is weak, overlay files polish it without touching generated code.
-
-```yaml
-# internal/overlay/iam.yaml
-commands:
-  create-user:
-    aliases: [adduser]
-    short: "Create a user in the IAM service"
-    example: |
-      acmectl iam create-user \
-        --email alice@example.com \
-        --role viewer
-```
-
-Point codegen at the overlay directory with `-overlay`:
-
-```sh
-go run github.com/samzong/lathe/cmd/codegen \
-  -sources specs/sources.yaml \
-  -overlay internal/overlay
-```
-
-Overrides are baked into the generated `CommandSpec` at codegen time — the runtime knows nothing about overlays. Empty or missing directory = pass-through.
 
 ---
 
