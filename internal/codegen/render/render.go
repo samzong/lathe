@@ -34,25 +34,56 @@ const RuntimePkg = "github.com/samzong/lathe/pkg/runtime"
 // the corresponding CommandSpec (Aliases are appended, not replaced). Passing
 // a nil map means "no overlay", equivalent to the pre-overlay behavior.
 func RenderModule(name string, specs []runtime.CommandSpec, overrides map[string]overlay.Override) error {
-	merged := make([]runtime.CommandSpec, len(specs))
-	copy(merged, specs)
-	for i := range merged {
-		o, ok := overrides[merged[i].Use]
+	var merged []runtime.CommandSpec
+	for _, s := range specs {
+		o, ok := overrides[s.Use]
+		if ok && o.Ignore {
+			continue
+		}
+		cs := s
 		if !ok {
+			merged = append(merged, cs)
 			continue
 		}
 		if o.Short != "" {
-			merged[i].Short = o.Short
+			cs.Short = o.Short
 		}
 		if o.Long != "" {
-			merged[i].Long = o.Long
+			cs.Long = o.Long
 		}
 		if o.Example != "" {
-			merged[i].Example = o.Example
+			cs.Example = o.Example
 		}
 		if len(o.Aliases) > 0 {
-			merged[i].Aliases = append(merged[i].Aliases, o.Aliases...)
+			cs.Aliases = append(cs.Aliases, o.Aliases...)
 		}
+		if o.Group != "" {
+			cs.Group = o.Group
+		}
+		if o.Hidden != nil {
+			cs.Hidden = *o.Hidden
+		}
+		if len(o.Params) > 0 {
+			for j := range cs.Params {
+				po, pok := o.Params[cs.Params[j].Name]
+				if !pok {
+					continue
+				}
+				if po.Flag != "" {
+					cs.Params[j].Flag = po.Flag
+				}
+				if po.Help != "" {
+					cs.Params[j].Help = po.Help
+				}
+				if po.Default != "" {
+					cs.Params[j].Default = po.Default
+				}
+				if po.Deprecated || po.Hidden {
+					cs.Params[j].Deprecated = true
+				}
+			}
+		}
+		merged = append(merged, cs)
 	}
 	var buf strings.Builder
 	ctx := moduleCtx{

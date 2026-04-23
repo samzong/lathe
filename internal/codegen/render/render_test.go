@@ -56,6 +56,107 @@ func TestRenderModule_AppliesOverlay(t *testing.T) {
 	}
 }
 
+func TestRenderModule_IgnoreDropsCommand(t *testing.T) {
+	t.Chdir(t.TempDir())
+	if err := os.WriteFile("go.mod", []byte("module example.com/fake\n\ngo 1.25\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	specs := []runtime.CommandSpec{
+		{Group: "Addon", Use: "install-addon", Short: "install", Method: "POST", PathTpl: "/addon"},
+		{Group: "Addon", Use: "delete-addon", Short: "delete", Method: "DELETE", PathTpl: "/addon/{id}"},
+	}
+	overrides := map[string]overlay.Override{
+		"delete-addon": {Ignore: true},
+	}
+	if err := RenderModule("demo", specs, overrides); err != nil {
+		t.Fatalf("RenderModule: %v", err)
+	}
+	out, err := os.ReadFile(filepath.Join("internal/generated/demo/demo_gen.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := string(out)
+	if !strings.Contains(got, `"install-addon"`) {
+		t.Error("install-addon should be present")
+	}
+	if strings.Contains(got, `"delete-addon"`) {
+		t.Error("delete-addon should be ignored")
+	}
+}
+
+func TestRenderModule_GroupAndHiddenOverride(t *testing.T) {
+	t.Chdir(t.TempDir())
+	if err := os.WriteFile("go.mod", []byte("module example.com/fake\n\ngo 1.25\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	hidden := true
+	specs := []runtime.CommandSpec{
+		{Group: "Default", Use: "get-item", Short: "get", Method: "GET", PathTpl: "/item"},
+	}
+	overrides := map[string]overlay.Override{
+		"get-item": {Group: "Items", Hidden: &hidden},
+	}
+	if err := RenderModule("demo", specs, overrides); err != nil {
+		t.Fatalf("RenderModule: %v", err)
+	}
+	out, err := os.ReadFile(filepath.Join("internal/generated/demo/demo_gen.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := string(out)
+	if strings.Contains(got, `"Default"`) {
+		t.Error("group should be overridden; Default should not appear")
+	}
+	if !strings.Contains(got, `"Items"`) {
+		t.Error("group should be overridden to Items")
+	}
+	if !strings.Contains(got, "Hidden:") {
+		t.Error("hidden should be set")
+	}
+}
+
+func TestRenderModule_ParamOverride(t *testing.T) {
+	t.Chdir(t.TempDir())
+	if err := os.WriteFile("go.mod", []byte("module example.com/fake\n\ngo 1.25\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	specs := []runtime.CommandSpec{
+		{
+			Group: "Users", Use: "list-users", Short: "list", Method: "GET", PathTpl: "/users",
+			Params: []runtime.ParamSpec{
+				{Name: "status", Flag: "status", In: "query", GoType: "string", Help: "original help"},
+			},
+		},
+	}
+	overrides := map[string]overlay.Override{
+		"list-users": {
+			Params: map[string]overlay.ParamOverride{
+				"status": {Flag: "user-status", Help: "override help", Default: "active"},
+			},
+		},
+	}
+	if err := RenderModule("demo", specs, overrides); err != nil {
+		t.Fatalf("RenderModule: %v", err)
+	}
+	out, err := os.ReadFile(filepath.Join("internal/generated/demo/demo_gen.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := string(out)
+	if !strings.Contains(got, `"user-status"`) {
+		t.Error("flag should be renamed to user-status")
+	}
+	if !strings.Contains(got, `"override help"`) {
+		t.Error("help should be overridden")
+	}
+	if !strings.Contains(got, `Default: "active"`) {
+		t.Error("default should be set to active")
+	}
+	if strings.Contains(got, `"original help"`) {
+		t.Error("original help should not appear")
+	}
+}
+
 func TestRenderModule_NilOverrides(t *testing.T) {
 	t.Chdir(t.TempDir())
 	if err := os.WriteFile("go.mod", []byte("module example.com/fake\n\ngo 1.25\n"), 0o644); err != nil {

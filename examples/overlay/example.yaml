@@ -31,3 +31,12 @@ commands: {}
 #         --email alice@example.com \
 #         --role viewer \
 #         --workspace default
+#     group: "Identity"
+#     hidden: false
+#     params:
+#       workspace:
+#         flag: ws
+#         help: "Target workspace name"
+#         default: "default"
+#   internal-debug:
+#     ignore: true

@@ -9,14 +9,23 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Override is the per-command hand-written UX patch applied on top of the
-// mechanically generated command. Every field is optional; empty means
-// "keep whatever the generated layer produced".
 type Override struct {
-	Aliases []string `yaml:"aliases"`
-	Short   string   `yaml:"short"`
-	Long    string   `yaml:"long"`
-	Example string   `yaml:"example"`
+	Aliases []string                 `yaml:"aliases"`
+	Short   string                   `yaml:"short"`
+	Long    string                   `yaml:"long"`
+	Example string                   `yaml:"example"`
+	Group   string                   `yaml:"group"`
+	Hidden  *bool                    `yaml:"hidden"`
+	Ignore  bool                     `yaml:"ignore"`
+	Params  map[string]ParamOverride `yaml:"params"`
+}
+
+type ParamOverride struct {
+	Flag       string `yaml:"flag"`
+	Help       string `yaml:"help"`
+	Default    string `yaml:"default"`
+	Hidden     bool   `yaml:"hidden"`
+	Deprecated bool   `yaml:"deprecated"`
 }
 
 type moduleFile struct {

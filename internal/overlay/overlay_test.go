@@ -60,6 +60,57 @@ func TestLoadDir_ParsesMultipleModules(t *testing.T) {
 	}
 }
 
+func TestLoadDir_ParsesExtendedFields(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, filepath.Join(dir, "iam.yaml"), `commands:
+  create-user:
+    group: "Identity"
+    hidden: true
+    params:
+      status:
+        flag: user-status
+        help: "Account status"
+        default: "active"
+        deprecated: true
+  delete-user:
+    ignore: true
+  get-user:
+    hidden: false
+`)
+	got, err := LoadDir(dir)
+	if err != nil {
+		t.Fatalf("LoadDir: %v", err)
+	}
+	cu := got["iam"]["create-user"]
+	if cu.Group != "Identity" {
+		t.Errorf("group = %q, want Identity", cu.Group)
+	}
+	if cu.Hidden == nil || !*cu.Hidden {
+		t.Errorf("hidden = %v, want true", cu.Hidden)
+	}
+	sp := cu.Params["status"]
+	if sp.Flag != "user-status" {
+		t.Errorf("param flag = %q, want user-status", sp.Flag)
+	}
+	if sp.Help != "Account status" {
+		t.Errorf("param help = %q, want Account status", sp.Help)
+	}
+	if sp.Default != "active" {
+		t.Errorf("param default = %q, want active", sp.Default)
+	}
+	if !sp.Deprecated {
+		t.Error("param deprecated = false, want true")
+	}
+	du := got["iam"]["delete-user"]
+	if !du.Ignore {
+		t.Error("delete-user ignore = false, want true")
+	}
+	gu := got["iam"]["get-user"]
+	if gu.Hidden == nil || *gu.Hidden {
+		t.Errorf("get-user hidden = %v, want false", gu.Hidden)
+	}
+}
+
 func writeFile(t *testing.T, path, body string) {
 	t.Helper()
 	if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
