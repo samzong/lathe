@@ -38,6 +38,6 @@ func renderYAML(data []byte, w io.Writer) error {
 	}
 	enc := yaml.NewEncoder(w)
 	enc.SetIndent(2)
-	defer enc.Close()
+	defer func() { _ = enc.Close() }()
 	return enc.Encode(v)
 }

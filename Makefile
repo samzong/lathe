@@ -30,16 +30,21 @@ gen: ## Regenerate internal/generated from cached specs
 
 # ── Quality ──────────────────────────────────────────────────────────────────
 
-.PHONY: check test vet fmt fmt-check
+.PHONY: check test vet fmt fmt-check lint
 
-check: ## Full quality gate — fmt-check, vet, test
-	@printf '\n$(BOLD)[1/3] Checking format$(RESET)\n'
+check: ## Full quality gate — fmt-check, vet, lint, test
+	@printf '\n$(BOLD)[1/4] Checking format$(RESET)\n'
 	@$(MAKE) --no-print-directory fmt-check
-	@printf '\n$(BOLD)[2/3] Running vet$(RESET)\n'
+	@printf '\n$(BOLD)[2/4] Running vet$(RESET)\n'
 	$(GO) vet ./...
-	@printf '\n$(BOLD)[3/3] Running tests$(RESET)\n'
+	@printf '\n$(BOLD)[3/4] Running lint$(RESET)\n'
+	@$(MAKE) --no-print-directory lint
+	@printf '\n$(BOLD)[4/4] Running tests$(RESET)\n'
 	$(GO) test ./...
 	@printf '\n$(GREEN)  ✓ All checks passed$(RESET)\n\n'
+
+lint: ## Run golangci-lint
+	golangci-lint run ./...
 
 test: ## Run tests
 	$(GO) test ./...

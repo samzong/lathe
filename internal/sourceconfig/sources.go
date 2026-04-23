@@ -20,13 +20,13 @@ type Config struct {
 }
 
 type Source struct {
-	Name      string         `yaml:"-"`
-	RepoURL   string         `yaml:"repo_url"`
-	PinnedTag string         `yaml:"pinned_tag"`
-	Backend   string         `yaml:"backend"`
-	Swagger  *SwaggerConfig  `yaml:"swagger,omitempty"`
-	Proto    *ProtoConfig    `yaml:"proto,omitempty"`
-	OpenAPI3 *OpenAPI3Config `yaml:"openapi3,omitempty"`
+	Name      string          `yaml:"-"`
+	RepoURL   string          `yaml:"repo_url"`
+	PinnedTag string          `yaml:"pinned_tag"`
+	Backend   string          `yaml:"backend"`
+	Swagger   *SwaggerConfig  `yaml:"swagger,omitempty"`
+	Proto     *ProtoConfig    `yaml:"proto,omitempty"`
+	OpenAPI3  *OpenAPI3Config `yaml:"openapi3,omitempty"`
 }
 
 type SwaggerConfig struct {

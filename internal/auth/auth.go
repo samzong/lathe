@@ -71,7 +71,7 @@ func newLogin(m *config.Manifest) *cobra.Command {
 				result, err := validateToken(cmd.Context(), hostname, token, m.Auth.Validate, runtime.ClientOptions{Insecure: insecure})
 				if err != nil {
 					if !insecure && strings.Contains(err.Error(), "tls:") {
-						return fmt.Errorf("token validation failed against %s: %w\n\nThe server uses a self-signed or non-standard certificate. Re-run with --insecure to skip TLS verification (the choice is persisted per host).", hostname, err)
+						return fmt.Errorf("token validation failed against %s: %w\n\nThe server uses a self-signed or non-standard certificate.\nRe-run with --insecure to skip TLS verification (the choice is persisted per host)", hostname, err)
 					}
 					return fmt.Errorf("token validation failed against %s: %w", hostname, err)
 				}
