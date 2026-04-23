@@ -1,0 +1,53 @@
+{
+  "Name": "demo",
+  "Operations": [
+    {
+      "Group": "Orgs",
+      "OperationID": "Org_ListMembers",
+      "Summary": "List org members.",
+      "Description": "",
+      "Method": "GET",
+      "Path": "/orgs/{org_id}/members",
+      "Parameters": [
+        {
+          "Name": "limit",
+          "In": "query",
+          "Required": false,
+          "Type": "integer",
+          "Description": ""
+        },
+        {
+          "Name": "org_id",
+          "In": "path",
+          "Required": true,
+          "Type": "string",
+          "Description": ""
+        }
+      ],
+      "RequestBody": null,
+      "Responses": {}
+    },
+    {
+      "Group": "Orgs",
+      "OperationID": "Org_AddMember",
+      "Summary": "Add a member.",
+      "Description": "",
+      "Method": "POST",
+      "Path": "/orgs/{org_id}/members",
+      "Parameters": [
+        {
+          "Name": "org_id",
+          "In": "path",
+          "Required": true,
+          "Type": "string",
+          "Description": "Override"
+        }
+      ],
+      "RequestBody": {
+        "Required": true
+      },
+      "Responses": {}
+    }
+  ],
+  "Schemas": {}
+}

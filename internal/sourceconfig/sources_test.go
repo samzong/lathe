@@ -103,6 +103,77 @@ func TestLoad_AcceptsImmutableTag(t *testing.T) {
 	}
 }
 
+func TestLoad_AcceptsOpenAPI3(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "sources.yaml")
+	body := `sources:
+  demo:
+    repo_url: https://example.com/repo.git
+    pinned_tag: v2.0.0
+    backend: openapi3
+    openapi3:
+      files: [openapi.yaml]
+`
+	if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+		t.Fatalf("seed yaml: %v", err)
+	}
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.Sources["demo"].Backend != BackendOpenAPI3 {
+		t.Errorf("backend = %q, want openapi3", cfg.Sources["demo"].Backend)
+	}
+}
+
+func TestLoad_RejectsOpenAPI3WithoutFiles(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "sources.yaml")
+	body := `sources:
+  demo:
+    repo_url: https://example.com/repo.git
+    pinned_tag: v2.0.0
+    backend: openapi3
+    openapi3:
+      files: []
+`
+	if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+		t.Fatalf("seed yaml: %v", err)
+	}
+	_, err := Load(path)
+	if err == nil {
+		t.Fatal("Load accepted openapi3 with empty files; want rejection")
+	}
+	if !strings.Contains(err.Error(), "non-empty openapi3.files") {
+		t.Errorf("error = %v, want to mention non-empty openapi3.files", err)
+	}
+}
+
+func TestLoad_RejectsOpenAPI3WithSwaggerBlock(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "sources.yaml")
+	body := `sources:
+  demo:
+    repo_url: https://example.com/repo.git
+    pinned_tag: v2.0.0
+    backend: openapi3
+    openapi3:
+      files: [openapi.yaml]
+    swagger:
+      files: [api.json]
+`
+	if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+		t.Fatalf("seed yaml: %v", err)
+	}
+	_, err := Load(path)
+	if err == nil {
+		t.Fatal("Load accepted openapi3 with swagger block; want rejection")
+	}
+	if !strings.Contains(err.Error(), "must not set swagger block") {
+		t.Errorf("error = %v, want to mention swagger block", err)
+	}
+}
+
 func TestLoad_AcceptsFullSHA(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "sources.yaml")

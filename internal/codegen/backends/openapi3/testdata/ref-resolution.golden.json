@@ -1,0 +1,42 @@
+{
+  "Name": "demo",
+  "Operations": [
+    {
+      "Group": "Pets",
+      "OperationID": "Pet_Create",
+      "Summary": "Create a pet.",
+      "Description": "",
+      "Method": "POST",
+      "Path": "/pets",
+      "Parameters": null,
+      "RequestBody": {
+        "Required": true
+      },
+      "Responses": {
+        "200": {
+          "Schema": {
+            "Ref": "#/definitions/Pet",
+            "Type": "",
+            "Properties": null,
+            "Items": null
+          }
+        }
+      }
+    }
+  ],
+  "Schemas": {
+    "Pet": {
+      "Ref": "",
+      "Type": "object",
+      "Properties": {
+        "name": {
+          "Ref": "",
+          "Type": "string",
+          "Properties": null,
+          "Items": null
+        }
+      },
+      "Items": null
+    }
+  }
+}

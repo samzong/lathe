@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/samzong/lathe/internal/codegen/backends/openapi3"
 	"github.com/samzong/lathe/internal/codegen/backends/proto"
 	"github.com/samzong/lathe/internal/codegen/backends/swagger"
 	"github.com/samzong/lathe/internal/codegen/normalize"
@@ -60,6 +61,8 @@ func parseSource(src *sourceconfig.Source, syncDir string) (*rawir.RawModule, er
 		return swagger.Parse(src, syncDir)
 	case sourceconfig.BackendProto:
 		return proto.Parse(src, syncDir)
+	case sourceconfig.BackendOpenAPI3:
+		return openapi3.Parse(src, syncDir)
 	default:
 		return nil, fmt.Errorf("source %q: unknown backend %q", src.Name, src.Backend)
 	}
