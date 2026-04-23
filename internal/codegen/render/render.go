@@ -211,6 +211,14 @@ var Specs = []runtime.CommandSpec{
 			},{{end}}
 		},
 		{{- end}}
+		{{- if $op.Security}}
+		Security: &runtime.SecurityHint{
+			{{- if $op.Security.Public}}Public: true,{{end}}
+			{{- if $op.Security.Scopes}}Scopes: []string{
+				{{- range $op.Security.Scopes}}{{printf "%q" .}},{{end}}
+			},{{end}}
+		},
+		{{- end}}
 	},
 {{- end}}
 }
