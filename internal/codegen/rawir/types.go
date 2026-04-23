@@ -24,6 +24,10 @@ type RawParameter struct {
 	Required    bool
 	Type        string
 	Description string
+	Default     string
+	Enum        []string
+	Format      string
+	Deprecated  bool
 }
 
 type RawRequestBody struct {

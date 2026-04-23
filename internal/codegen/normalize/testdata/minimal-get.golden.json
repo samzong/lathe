@@ -18,7 +18,11 @@
         "In": "path",
         "GoType": "string",
         "Help": "id (path, required)",
-        "Required": true
+        "Required": true,
+        "Default": "",
+        "Enum": null,
+        "Format": "",
+        "Deprecated": false
       },
       {
         "Name": "limit",
@@ -26,7 +30,11 @@
         "In": "query",
         "GoType": "int64",
         "Help": "Max rows. (query)",
-        "Required": false
+        "Required": false,
+        "Default": "",
+        "Enum": null,
+        "Format": "",
+        "Deprecated": false
       }
     ],
     "RequestBody": null,

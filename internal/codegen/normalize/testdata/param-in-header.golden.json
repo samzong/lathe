@@ -18,7 +18,11 @@
         "In": "path",
         "GoType": "string",
         "Help": "id (path, required)",
-        "Required": true
+        "Required": true,
+        "Default": "",
+        "Enum": null,
+        "Format": "",
+        "Deprecated": false
       },
       {
         "Name": "X-Request-Id",
@@ -26,7 +30,11 @@
         "In": "header",
         "GoType": "string",
         "Help": "Trace id. (header)",
-        "Required": false
+        "Required": false,
+        "Default": "",
+        "Enum": null,
+        "Format": "",
+        "Deprecated": false
       }
     ],
     "RequestBody": null,

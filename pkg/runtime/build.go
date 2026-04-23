@@ -61,6 +61,24 @@ func buildCmd(s CommandSpec) *cobra.Command {
 				return err
 			}
 
+			for _, p := range s.Params {
+				if len(p.Enum) == 0 || !cmd.Flags().Changed(p.Flag) {
+					continue
+				}
+				raw := flagStringValue(vals[p.Name])
+				valid := false
+				for _, e := range p.Enum {
+					if raw == e {
+						valid = true
+						break
+					}
+				}
+				if !valid {
+					return fmt.Errorf("invalid value %q for --%s: must be one of %s",
+						raw, p.Flag, strings.Join(p.Enum, ", "))
+				}
+			}
+
 			path := s.PathTpl
 			q := url.Values{}
 			hdrs := map[string]string{}
@@ -152,19 +170,27 @@ func buildCmd(s CommandSpec) *cobra.Command {
 		if p.In == InPath {
 			v := new(string)
 			vals[p.Name] = v
-			cmd.Flags().StringVar(v, p.Flag, "", p.Help)
+			cmd.Flags().StringVar(v, p.Flag, p.Default, p.Help)
 			_ = cmd.MarkFlagRequired(p.Flag)
+			if p.Deprecated {
+				_ = cmd.Flags().MarkDeprecated(p.Flag, "this flag is deprecated")
+			}
 			continue
 		}
 		switch p.GoType {
 		case "int64":
 			v := new(int64)
 			vals[p.Name] = v
-			cmd.Flags().Int64Var(v, p.Flag, 0, p.Help)
+			var def int64
+			if p.Default != "" {
+				def, _ = strconv.ParseInt(p.Default, 10, 64)
+			}
+			cmd.Flags().Int64Var(v, p.Flag, def, p.Help)
 		case "bool":
 			v := new(bool)
 			vals[p.Name] = v
-			cmd.Flags().BoolVar(v, p.Flag, false, p.Help)
+			def := p.Default == "true"
+			cmd.Flags().BoolVar(v, p.Flag, def, p.Help)
 		case "[]string":
 			v := new([]string)
 			vals[p.Name] = v
@@ -172,10 +198,13 @@ func buildCmd(s CommandSpec) *cobra.Command {
 		default:
 			v := new(string)
 			vals[p.Name] = v
-			cmd.Flags().StringVar(v, p.Flag, "", p.Help)
+			cmd.Flags().StringVar(v, p.Flag, p.Default, p.Help)
 		}
 		if p.Required {
 			_ = cmd.MarkFlagRequired(p.Flag)
+		}
+		if p.Deprecated {
+			_ = cmd.Flags().MarkDeprecated(p.Flag, "this flag is deprecated")
 		}
 	}
 	if s.RequestBody != nil {
@@ -193,4 +222,21 @@ func buildCmd(s CommandSpec) *cobra.Command {
 		cmd.Deprecated = "this command is deprecated"
 	}
 	return cmd
+}
+
+func flagStringValue(v any) string {
+	switch tv := v.(type) {
+	case *string:
+		return *tv
+	case *int64:
+		return strconv.FormatInt(*tv, 10)
+	case *bool:
+		return strconv.FormatBool(*tv)
+	case *[]string:
+		if len(*tv) > 0 {
+			return (*tv)[0]
+		}
+		return ""
+	}
+	return ""
 }

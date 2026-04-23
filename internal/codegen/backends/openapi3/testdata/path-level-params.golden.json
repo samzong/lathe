@@ -14,14 +14,22 @@
           "In": "query",
           "Required": false,
           "Type": "integer",
-          "Description": ""
+          "Description": "",
+          "Default": "",
+          "Enum": null,
+          "Format": "",
+          "Deprecated": false
         },
         {
           "Name": "org_id",
           "In": "path",
           "Required": true,
           "Type": "string",
-          "Description": ""
+          "Description": "",
+          "Default": "",
+          "Enum": null,
+          "Format": "",
+          "Deprecated": false
         }
       ],
       "RequestBody": null,
@@ -40,7 +48,11 @@
           "In": "path",
           "Required": true,
           "Type": "string",
-          "Description": "Override"
+          "Description": "Override",
+          "Default": "",
+          "Enum": null,
+          "Format": "",
+          "Deprecated": false
         }
       ],
       "RequestBody": {

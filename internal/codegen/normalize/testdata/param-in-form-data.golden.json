@@ -18,7 +18,11 @@
         "In": "formData",
         "GoType": "string",
         "Help": "Binary content. (formData, required)",
-        "Required": true
+        "Required": true,
+        "Default": "",
+        "Enum": null,
+        "Format": "",
+        "Deprecated": false
       }
     ],
     "RequestBody": null,

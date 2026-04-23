@@ -150,7 +150,7 @@ var Specs = []runtime.CommandSpec{
 		{{- if $op.Params}}
 		Params: []runtime.ParamSpec{
 			{{- range $op.Params}}
-			{Name: {{printf "%q" .Name}}, Flag: {{printf "%q" .Flag}}, In: {{printf "%q" .In}}, GoType: {{printf "%q" .GoType}}, Help: {{printf "%q" .Help}}, Required: {{.Required}}},
+			{Name: {{printf "%q" .Name}}, Flag: {{printf "%q" .Flag}}, In: {{printf "%q" .In}}, GoType: {{printf "%q" .GoType}}, Help: {{printf "%q" .Help}}, Required: {{.Required}}{{- if .Default}}, Default: {{printf "%q" .Default}}{{end}}{{- if .Enum}}, Enum: []string{ {{- range .Enum}}{{printf "%q" .}}, {{end -}} }{{end}}{{- if .Format}}, Format: {{printf "%q" .Format}}{{end}}{{- if .Deprecated}}, Deprecated: true{{end}}},
 			{{- end}}
 		},
 		{{- end}}

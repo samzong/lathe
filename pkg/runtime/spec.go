@@ -1,6 +1,6 @@
 package runtime
 
-const SchemaVersion = 1
+const SchemaVersion = 2
 
 type CommandSpec struct {
 	Group       string
@@ -20,12 +20,16 @@ type CommandSpec struct {
 }
 
 type ParamSpec struct {
-	Name     string
-	Flag     string
-	In       string
-	GoType   string
-	Help     string
-	Required bool
+	Name       string
+	Flag       string
+	In         string
+	GoType     string
+	Help       string
+	Required   bool
+	Default    string
+	Enum       []string
+	Format     string
+	Deprecated bool
 }
 
 const (

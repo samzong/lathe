@@ -47,6 +47,7 @@ type parameter struct {
 	Required    bool        `json:"required" yaml:"required"`
 	Schema      *schemaNode `json:"schema,omitempty" yaml:"schema,omitempty"`
 	Description string      `json:"description" yaml:"description"`
+	Deprecated  bool        `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
 }
 
 type requestBody struct {
@@ -65,6 +66,9 @@ type response struct {
 type schemaNode struct {
 	Ref        string                 `json:"$ref,omitempty" yaml:"$ref,omitempty"`
 	Type       string                 `json:"type,omitempty" yaml:"type,omitempty"`
+	Format     string                 `json:"format,omitempty" yaml:"format,omitempty"`
+	Default    any                    `json:"default,omitempty" yaml:"default,omitempty"`
+	Enum       []any                  `json:"enum,omitempty" yaml:"enum,omitempty"`
 	Properties map[string]*schemaNode `json:"properties,omitempty" yaml:"properties,omitempty"`
 	Items      *schemaNode            `json:"items,omitempty" yaml:"items,omitempty"`
 }
@@ -223,8 +227,15 @@ func convertOp(op *operation, method, path string, pathParams []parameter) rawir
 
 func convertParam(p parameter) rawir.RawParameter {
 	typ := "string"
-	if p.Schema != nil && p.Schema.Type != "" {
-		typ = p.Schema.Type
+	var format, def string
+	var enum []string
+	if p.Schema != nil {
+		if p.Schema.Type != "" {
+			typ = p.Schema.Type
+		}
+		format = p.Schema.Format
+		def = anyToString(p.Schema.Default)
+		enum = anySliceToStrings(p.Schema.Enum)
 	}
 	return rawir.RawParameter{
 		Name:        p.Name,
@@ -232,7 +243,29 @@ func convertParam(p parameter) rawir.RawParameter {
 		Required:    p.Required,
 		Type:        typ,
 		Description: p.Description,
+		Default:     def,
+		Enum:        enum,
+		Format:      format,
+		Deprecated:  p.Deprecated,
 	}
+}
+
+func anyToString(v any) string {
+	if v == nil {
+		return ""
+	}
+	return fmt.Sprintf("%v", v)
+}
+
+func anySliceToStrings(vs []any) []string {
+	if len(vs) == 0 {
+		return nil
+	}
+	out := make([]string, len(vs))
+	for i, v := range vs {
+		out[i] = fmt.Sprintf("%v", v)
+	}
+	return out
 }
 
 func convertSchema(s *schemaNode) *rawir.RawSchema {

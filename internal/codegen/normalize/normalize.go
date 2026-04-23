@@ -145,22 +145,30 @@ func camelToKebab(s string) string {
 
 func pathParam(p rawir.RawParameter) runtime.ParamSpec {
 	return runtime.ParamSpec{
-		Name:     p.Name,
-		Flag:     camelToKebab(p.Name),
-		In:       "path",
-		GoType:   "string",
-		Help:     helpText(p),
-		Required: true,
+		Name:       p.Name,
+		Flag:       camelToKebab(p.Name),
+		In:         "path",
+		GoType:     "string",
+		Help:       helpText(p),
+		Required:   true,
+		Default:    p.Default,
+		Enum:       p.Enum,
+		Format:     p.Format,
+		Deprecated: p.Deprecated,
 	}
 }
 
 func queryParam(p rawir.RawParameter) runtime.ParamSpec {
 	ps := runtime.ParamSpec{
-		Name:     p.Name,
-		Flag:     camelToKebab(p.Name),
-		In:       "query",
-		Help:     helpText(p),
-		Required: p.Required,
+		Name:       p.Name,
+		Flag:       camelToKebab(p.Name),
+		In:         "query",
+		Help:       helpText(p),
+		Required:   p.Required,
+		Default:    p.Default,
+		Enum:       p.Enum,
+		Format:     p.Format,
+		Deprecated: p.Deprecated,
 	}
 	switch p.Type {
 	case "integer":
@@ -177,22 +185,30 @@ func queryParam(p rawir.RawParameter) runtime.ParamSpec {
 
 func headerParam(p rawir.RawParameter) runtime.ParamSpec {
 	return runtime.ParamSpec{
-		Name:     p.Name,
-		Flag:     camelToKebab(p.Name),
-		In:       "header",
-		GoType:   "string",
-		Help:     helpText(p),
-		Required: p.Required,
+		Name:       p.Name,
+		Flag:       camelToKebab(p.Name),
+		In:         "header",
+		GoType:     "string",
+		Help:       helpText(p),
+		Required:   p.Required,
+		Default:    p.Default,
+		Enum:       p.Enum,
+		Format:     p.Format,
+		Deprecated: p.Deprecated,
 	}
 }
 
 func formDataParam(p rawir.RawParameter) runtime.ParamSpec {
 	ps := runtime.ParamSpec{
-		Name:     p.Name,
-		Flag:     camelToKebab(p.Name),
-		In:       "formData",
-		Help:     helpText(p),
-		Required: p.Required,
+		Name:       p.Name,
+		Flag:       camelToKebab(p.Name),
+		In:         "formData",
+		Help:       helpText(p),
+		Required:   p.Required,
+		Default:    p.Default,
+		Enum:       p.Enum,
+		Format:     p.Format,
+		Deprecated: p.Deprecated,
 	}
 	switch p.Type {
 	case "integer":
@@ -211,10 +227,18 @@ func helpText(p rawir.RawParameter) string {
 		base = p.Name
 	}
 	base = firstLine(base)
+	var parts []string
+	parts = append(parts, p.In)
 	if p.Required {
-		return fmt.Sprintf("%s (%s, required)", base, p.In)
+		parts = append(parts, "required")
 	}
-	return fmt.Sprintf("%s (%s)", base, p.In)
+	if p.Format != "" {
+		parts = append(parts, p.Format)
+	}
+	if len(p.Enum) > 0 {
+		parts = append(parts, "one of: "+strings.Join(p.Enum, "|"))
+	}
+	return fmt.Sprintf("%s (%s)", base, strings.Join(parts, ", "))
 }
 
 func deriveList(op rawir.RawOperation, defs map[string]*rawir.RawSchema) (string, string) {

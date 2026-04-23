@@ -14,7 +14,11 @@
           "In": "path",
           "Required": true,
           "Type": "string",
-          "Description": ""
+          "Description": "",
+          "Default": "",
+          "Enum": null,
+          "Format": "",
+          "Deprecated": false
         }
       ],
       "RequestBody": null,

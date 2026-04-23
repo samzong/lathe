@@ -14,14 +14,22 @@
           "In": "header",
           "Required": false,
           "Type": "string",
-          "Description": "Trace id."
+          "Description": "Trace id.",
+          "Default": "",
+          "Enum": null,
+          "Format": "",
+          "Deprecated": false
         },
         {
           "Name": "file",
           "In": "formData",
           "Required": true,
           "Type": "string",
-          "Description": "Binary content."
+          "Description": "Binary content.",
+          "Default": "",
+          "Enum": null,
+          "Format": "",
+          "Deprecated": false
         }
       ],
       "RequestBody": null,

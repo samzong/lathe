@@ -11,6 +11,24 @@ import (
 	"github.com/samzong/lathe/internal/sourceconfig"
 )
 
+func anyToString(v any) string {
+	if v == nil {
+		return ""
+	}
+	return fmt.Sprintf("%v", v)
+}
+
+func anySliceToStrings(vs []any) []string {
+	if len(vs) == 0 {
+		return nil
+	}
+	out := make([]string, len(vs))
+	for i, v := range vs {
+		out[i] = fmt.Sprintf("%v", v)
+	}
+	return out
+}
+
 type swaggerDoc struct {
 	Definitions map[string]*schemaNode          `json:"definitions"`
 	Paths       map[string]map[string]operation `json:"paths"`
@@ -30,8 +48,12 @@ type parameter struct {
 	In          string      `json:"in"`
 	Required    bool        `json:"required"`
 	Type        string      `json:"type"`
+	Format      string      `json:"format,omitempty"`
 	Description string      `json:"description"`
 	Schema      *schemaNode `json:"schema,omitempty"`
+	Default     any         `json:"default,omitempty"`
+	Enum        []any       `json:"enum,omitempty"`
+	Deprecated  bool        `json:"x-deprecated,omitempty"`
 }
 
 type response struct {
@@ -146,6 +168,10 @@ func convertOp(op operation, method, path string) rawir.RawOperation {
 			Required:    p.Required,
 			Type:        p.Type,
 			Description: p.Description,
+			Default:     anyToString(p.Default),
+			Enum:        anySliceToStrings(p.Enum),
+			Format:      p.Format,
+			Deprecated:  p.Deprecated,
 		})
 	}
 	for code, resp := range op.Responses {
