@@ -19,7 +19,7 @@ type validateResult struct {
 // plucks a display username from the JSON response. A nil v means the
 // manifest has no auth.validate block, which is equivalent to passing
 // --skip-validate: returns a zero result with nil error.
-func validateToken(ctx context.Context, hostname, token string, v *config.AuthValidate, opts runtime.ClientOptions) (validateResult, error) {
+func validateWithAuth(ctx context.Context, hostname string, auth runtime.Authenticator, v *config.AuthValidate, opts runtime.ClientOptions) (validateResult, error) {
 	if v == nil {
 		return validateResult{}, nil
 	}
@@ -30,7 +30,7 @@ func validateToken(ctx context.Context, hostname, token string, v *config.AuthVa
 	if method == "" {
 		method = "GET"
 	}
-	opts.Auth = runtime.BearerAuth{Token: token}
+	opts.Auth = auth
 	data, err := runtime.DoRaw(ctx, hostname, method, v.Path, nil, opts)
 	if err != nil {
 		return validateResult{}, err

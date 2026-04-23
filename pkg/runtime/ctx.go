@@ -65,8 +65,12 @@ func LoadHostOptions(cmd *cobra.Command) (string, ClientOptions, error) {
 		name := config.Active().CLI.Name
 		return "", ClientOptions{}, fmt.Errorf("not authenticated to %s (run: %s auth login --hostname %s)", hostname, name, hostname)
 	}
+	auth, err := NewAuthFromHost(e)
+	if err != nil {
+		return "", ClientOptions{}, err
+	}
 	opts := ClientOptions{
-		Auth:     BearerAuth{Token: e.OAuthToken},
+		Auth:     auth,
 		Insecure: e.Insecure,
 	}
 	if v, err := cmd.Root().PersistentFlags().GetBool("insecure"); err == nil && v {
@@ -92,8 +96,12 @@ func TryLoadHostOptions(cmd *cobra.Command) (string, ClientOptions, error) {
 		}
 		return hostname, opts, nil
 	}
+	auth, err := NewAuthFromHost(e)
+	if err != nil {
+		return hostname, ClientOptions{}, nil
+	}
 	opts := ClientOptions{
-		Auth:     BearerAuth{Token: e.OAuthToken},
+		Auth:     auth,
 		Insecure: e.Insecure,
 	}
 	if v, err := cmd.Root().PersistentFlags().GetBool("insecure"); err == nil && v {

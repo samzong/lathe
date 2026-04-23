@@ -36,6 +36,7 @@ func rootBool(cmd *cobra.Command, name string) bool {
 
 func newLogin(m *config.Manifest) *cobra.Command {
 	var (
+		authType     string
 		withToken    bool
 		skipValidate bool
 	)
@@ -58,26 +59,70 @@ func newLogin(m *config.Manifest) *cobra.Command {
 			}
 			hostname = config.NormalizeHostname(hostname)
 
-			token, err := readToken(withToken)
-			if err != nil {
-				return err
-			}
-			if token == "" {
-				return errors.New("empty token")
+			entry := config.HostEntry{AuthType: authType, Insecure: insecure}
+			switch authType {
+			case "", "bearer":
+				token, err := readToken(withToken)
+				if err != nil {
+					return err
+				}
+				if token == "" {
+					return errors.New("empty token")
+				}
+				entry.OAuthToken = token
+			case "apikey":
+				key, err := readSecret("API key", withToken)
+				if err != nil {
+					return err
+				}
+				if key == "" {
+					return errors.New("empty API key")
+				}
+				entry.APIKey = key
+				if !withToken {
+					fmt.Fprint(os.Stderr, "? Header name [X-API-Key]: ")
+					line, err := readLine(os.Stdin)
+					if err != nil {
+						return err
+					}
+					if h := strings.TrimSpace(line); h != "" {
+						entry.APIKeyHeader = h
+					}
+				}
+			case "basic":
+				fmt.Fprint(os.Stderr, "? Username: ")
+				uline, err := readLine(os.Stdin)
+				if err != nil {
+					return err
+				}
+				entry.BasicUser = strings.TrimSpace(uline)
+				if entry.BasicUser == "" {
+					return errors.New("empty username")
+				}
+				pass, err := readSecret("Password", false)
+				if err != nil {
+					return err
+				}
+				entry.BasicPassword = pass
+			default:
+				return fmt.Errorf("unknown auth type: %q (use bearer, apikey, or basic)", authType)
 			}
 
-			user := ""
 			if !skipValidate {
-				result, err := validateToken(cmd.Context(), hostname, token, m.Auth.Validate, runtime.ClientOptions{Insecure: insecure})
+				auth, err := runtime.NewAuthFromHost(entry)
+				if err != nil {
+					return err
+				}
+				result, err := validateWithAuth(cmd.Context(), hostname, auth, m.Auth.Validate, runtime.ClientOptions{Insecure: insecure})
 				if err != nil {
 					if !insecure && strings.Contains(err.Error(), "tls:") {
-						return fmt.Errorf("token validation failed against %s: %w\n\nThe server uses a self-signed or non-standard certificate.\nRe-run with --insecure to skip TLS verification (the choice is persisted per host)", hostname, err)
+						return fmt.Errorf("credential validation failed against %s: %w\n\nThe server uses a self-signed or non-standard certificate.\nRe-run with --insecure to skip TLS verification (the choice is persisted per host)", hostname, err)
 					}
-					return fmt.Errorf("token validation failed against %s: %w", hostname, err)
+					return fmt.Errorf("credential validation failed against %s: %w", hostname, err)
 				}
-				user = result.Username
-				if user != "" {
-					fmt.Fprintf(os.Stderr, "✓ Authenticated as %s\n", user)
+				entry.User = result.Username
+				if entry.User != "" {
+					fmt.Fprintf(os.Stderr, "✓ Authenticated as %s\n", entry.User)
 				}
 			}
 
@@ -85,7 +130,7 @@ func newLogin(m *config.Manifest) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			hosts.Set(hostname, config.HostEntry{User: user, OAuthToken: token, Insecure: insecure})
+			hosts.Set(hostname, entry)
 			if err := hosts.Save(); err != nil {
 				return err
 			}
@@ -93,8 +138,9 @@ func newLogin(m *config.Manifest) *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().BoolVar(&withToken, "with-token", false, "Read token from stdin")
-	cmd.Flags().BoolVar(&skipValidate, "skip-validate", false, "Do not validate the token against the server")
+	cmd.Flags().StringVar(&authType, "auth-type", "", "Authentication type: bearer (default), apikey, basic")
+	cmd.Flags().BoolVar(&withToken, "with-token", false, "Read token/key from stdin")
+	cmd.Flags().BoolVar(&skipValidate, "skip-validate", false, "Do not validate credentials against the server")
 	return cmd
 }
 
@@ -167,7 +213,23 @@ func printStatus(hostname string, e config.HostEntry) {
 	if user == "" {
 		user = fmt.Sprintf("(unknown — run `%s auth login` to validate)", config.Active().CLI.Name)
 	}
-	fmt.Fprintf(os.Stdout, "%s\n  ✓ Logged in as %s\n  ✓ Token: %s\n", hostname, user, maskToken(e.OAuthToken))
+	authLabel := e.AuthType
+	if authLabel == "" {
+		authLabel = "bearer"
+	}
+	credential := maskedCredential(e)
+	fmt.Fprintf(os.Stdout, "%s\n  ✓ Logged in as %s\n  ✓ Auth: %s\n  ✓ Credential: %s\n", hostname, user, authLabel, credential)
+}
+
+func maskedCredential(e config.HostEntry) string {
+	switch e.AuthType {
+	case "apikey":
+		return maskToken(e.APIKey)
+	case "basic":
+		return e.BasicUser + ":****"
+	default:
+		return maskToken(e.OAuthToken)
+	}
 }
 
 func maskToken(t string) string {
@@ -175,6 +237,30 @@ func maskToken(t string) string {
 		return "****"
 	}
 	return "****" + t[len(t)-4:]
+}
+
+func readSecret(prompt string, fromStdin bool) (string, error) {
+	if fromStdin {
+		data, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			return "", err
+		}
+		return strings.TrimSpace(string(data)), nil
+	}
+	if term.IsTerminal(int(os.Stdin.Fd())) {
+		fmt.Fprintf(os.Stderr, "? Paste your %s: ", prompt)
+		b, err := term.ReadPassword(int(os.Stdin.Fd()))
+		fmt.Fprintln(os.Stderr)
+		if err != nil {
+			return "", err
+		}
+		return strings.TrimSpace(string(b)), nil
+	}
+	line, err := readLine(os.Stdin)
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(line), nil
 }
 
 func readToken(fromStdin bool) (string, error) {

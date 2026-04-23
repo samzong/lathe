@@ -36,7 +36,7 @@ func TestPluck(t *testing.T) {
 }
 
 func TestValidateToken_NilValidateSkips(t *testing.T) {
-	r, err := validateToken(context.Background(), "example.com", "t", nil, runtime.ClientOptions{})
+	r, err := validateWithAuth(context.Background(), "example.com", runtime.BearerAuth{Token: "t"}, nil, runtime.ClientOptions{})
 	if err != nil {
 		t.Fatalf("nil v should not error, got %v", err)
 	}
@@ -69,9 +69,9 @@ func TestValidateToken_PluckFlat(t *testing.T) {
 			FallbackField: "uid",
 		},
 	}
-	r, err := validateToken(context.Background(), srv.URL, "tok", v, runtime.ClientOptions{})
+	r, err := validateWithAuth(context.Background(), srv.URL, runtime.BearerAuth{Token: "tok"}, v, runtime.ClientOptions{})
 	if err != nil {
-		t.Fatalf("validateToken: %v", err)
+		t.Fatalf("validateWithAuth: %v", err)
 	}
 	if r.Username != "alice" {
 		t.Errorf("want alice, got %q", r.Username)
@@ -92,9 +92,9 @@ func TestValidateToken_FallsBack(t *testing.T) {
 			FallbackField: "uid",
 		},
 	}
-	r, err := validateToken(context.Background(), srv.URL, "tok", v, runtime.ClientOptions{})
+	r, err := validateWithAuth(context.Background(), srv.URL, runtime.BearerAuth{Token: "tok"}, v, runtime.ClientOptions{})
 	if err != nil {
-		t.Fatalf("validateToken: %v", err)
+		t.Fatalf("validateWithAuth: %v", err)
 	}
 	if r.Username != "u1" {
 		t.Errorf("want u1, got %q", r.Username)
@@ -114,9 +114,9 @@ func TestValidateToken_NestedPluck(t *testing.T) {
 			UsernameField: "data.user.name",
 		},
 	}
-	r, err := validateToken(context.Background(), srv.URL, "tok", v, runtime.ClientOptions{})
+	r, err := validateWithAuth(context.Background(), srv.URL, runtime.BearerAuth{Token: "tok"}, v, runtime.ClientOptions{})
 	if err != nil {
-		t.Fatalf("validateToken: %v", err)
+		t.Fatalf("validateWithAuth: %v", err)
 	}
 	if r.Username != "carol" {
 		t.Errorf("want carol, got %q", r.Username)
