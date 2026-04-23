@@ -45,12 +45,15 @@ flowchart TD
     B --> C{backend?}
 
     C -->|swagger| D1[specsync.syncSwagger]
+    C -->|openapi3| D3[specsync.syncOpenAPI3]
     C -->|proto| D2[specsync.syncProto]
 
     D1 --> E1[.cache/specs-sync/mod/*.swagger.json]
+    D3 --> E3[.cache/specs-sync/mod/*.yaml / *.json]
     D2 --> E2[.cache/specs-sync/mod/*.proto + deps]
 
     E1 -->|swagger.Parse| F[rawir.RawModule]
+    E3 -->|openapi3.Parse| F
     E2 -->|proto.Parse| F
 
     F -->|normalize.Normalize| G["[]runtime.CommandSpec"]
@@ -64,21 +67,21 @@ flowchart TD
     style J fill:#dcfce7,stroke:#16a34a
 ```
 
-Two backends fan in to a single raw IR (`rawir.RawModule`). `normalize` is the only place that understands the IR's semantics and projects it onto the runtime's `CommandSpec` shape. `render` is a pure `text/template` emit — if the `CommandSpec` shape is wrong, `render` cannot fix it.
+Three backends fan in to a single raw IR (`rawir.RawModule`). `normalize` is the only place that understands the IR's semantics and projects it onto the runtime's `CommandSpec` shape. `render` is a pure `text/template` emit — if the `CommandSpec` shape is wrong, `render` cannot fix it.
 
 ### Raw IR vs runtime spec
 
 Two IRs exist on purpose. `rawir` preserves backend-adjacent detail (schemas, refs, per-response shape) needed for **normalization decisions** (list-path detection, column picking). `runtime.CommandSpec` is the minimal declarative form the runner needs. The boundary between them is enforced by the package graph: nothing under `pkg/runtime` imports `internal/codegen/**`.
 
-### Why two backends, one IR
+### Why three backends, one IR
 
-| Concern | Swagger backend | Proto backend |
-|---|---|---|
-| Grouping | operation's first `tag` | `service` name |
-| Operation ID | `operationId` | `rpc` name |
-| Path / method | operation object | `google.api.http` annotation |
-| Body schema | `requestBody` | input message |
-| Response schema | first 2xx response | output message |
+| Concern | Swagger backend | OpenAPI 3 backend | Proto backend |
+|---|---|---|---|
+| Grouping | operation's first `tag` | operation's first `tag` | `service` name |
+| Operation ID | `operationId` | `operationId` | `rpc` name |
+| Path / method | operation object | operation object | `google.api.http` annotation |
+| Body schema | `requestBody` | `requestBody` (with `$ref` rewrite) | input message |
+| Response schema | first 2xx response | first 2xx response | output message |
 
 All of the above are normalized into the same `RawOperation` fields. By the time a spec reaches `normalize.Normalize`, the origin is irrelevant.
 
@@ -95,6 +98,7 @@ graph TD
         I1[specsync]
         I2[sourceconfig]
         I3[codegen/backends/swagger]
+        I3b[codegen/backends/openapi3]
         I4[codegen/backends/proto]
         I5[codegen/normalize]
         I6[codegen/rawir]
@@ -114,12 +118,14 @@ graph TD
     C2 --> I1
     C2 --> I2
     C2 --> I3
+    C2 --> I3b
     C2 --> I4
     C2 --> I5
     C2 --> I7
     C2 --> I8
 
     I3 --> I6
+    I3b --> I6
     I4 --> I6
     I5 --> I6
     I5 --> P2
@@ -143,8 +149,9 @@ graph TD
 | `cmd/specsync` | codegen | Thin wrapper over `internal/specsync`. Resolves cache root, runs sync. |
 | `cmd/codegen` | codegen | Orchestrates: load sources → verify sync state → parse → normalize → render. |
 | `internal/sourceconfig` | codegen | Parse `specs/sources.yaml`. Requires `pinned_tag` to be set; treats the value as an immutable ref for reproducibility. |
-| `internal/specsync` | codegen | `git clone --filter=blob:none` into `.cache/specs-work/<module>/`, then `git checkout` the pinned ref and stage the relevant files into `.cache/specs-sync/<module>/`. Writes `sync-state.yaml` consumed by codegen to detect stale caches. |
+| `internal/specsync` | codegen | `git clone --filter=blob:none` into `.cache/specs-work/<module>/`, then `git checkout` the pinned ref and stage the relevant files into `.cache/specs-sync/<module>/`. Writes `sync-state.yaml` (including `resolved_sha`) consumed by codegen to detect stale caches. |
 | `internal/codegen/backends/swagger` | codegen | Parse `*.swagger.json` → `RawModule`. Merges multiple files; first-seen wins on duplicate operation IDs. |
+| `internal/codegen/backends/openapi3` | codegen | Parse OpenAPI 3.x YAML/JSON → `RawModule`. Rewrites `#/components/schemas/` refs to rawir format; inherits path-level parameters. |
 | `internal/codegen/backends/proto` | codegen | Parse staged `.proto` tree → `RawModule`. Only RPCs with a `google.api.http` binding become operations. |
 | `internal/codegen/rawir` | codegen | Backend-agnostic raw types (`RawModule`, `RawOperation`, `RawSchema`). Includes `$ref` resolution. |
 | `internal/codegen/normalize` | codegen | The semantic projection. Groups, picks `Short`, derives list path, picks default columns, enforces method-ordering for determinism. |
@@ -152,7 +159,7 @@ graph TD
 | `internal/overlay` | codegen | Load `internal/overlay/<module>.yaml`. Results are passed to `render.RenderModule`, baked into the emitted `CommandSpec` literal. Runtime never sees overlays. |
 | `internal/auth` | runtime | `auth login/logout/status`. Uses `manifest.AuthInfo.Validate` to call the configured endpoint and display the identified principal. |
 | `pkg/config` | runtime | `Manifest` (CLI identity) and `Hosts` (per-hostname credentials). `Bind(m)` seeds package-level helpers with the active manifest. |
-| `pkg/runtime` | runtime | `CommandSpec` IR, the `Build` function that materializes cobra commands from specs, body builder (`--set`, `--file`), HTTP client, output formatters (table / json / yaml / raw). |
+| `pkg/runtime` | runtime | `CommandSpec` IR, the `Build` function that materializes cobra commands from specs, body builder (`--set`, `--file`), HTTP client with retry transport, `Authenticator` interface, `Formatter` registry, typed `LatheError` with stable exit codes, schema version contract. |
 | `pkg/lathe` | runtime | `NewApp(m)` — returns the root cobra command with auth subtree and module groups attached. The downstream `main.go` is ~15 lines. |
 
 ## Spec lifecycle
@@ -310,7 +317,7 @@ Three pieces of state cross the boundary:
 These are structural, not stylistic. Violating any of them means the architecture breaks.
 
 1. **`pkg/runtime` does not import `internal/codegen/**`.** The runtime cannot know how a `CommandSpec` was produced. This is what makes "two backends, one IR" real rather than aspirational.
-2. **`pinned_tag` is required.** `sourceconfig.Load` rejects an empty value. The field is treated as an immutable ref — supplying a branch name defeats reproducibility and is considered caller error, not something the loader type-checks.
+2. **`pinned_tag` is required and validated.** `sourceconfig.Load` rejects empty values and floating refs (`HEAD`, `main`, `refs/heads/*`). Only immutable tags and 40-char SHAs are accepted. `specsync` records the resolved commit SHA and codegen verifies it.
 3. **Codegen is never invoked at `go build` time.** Downstream consumers of a lathe-generated CLI do not need Go toolchain tags, build flags, or network access to install it.
 4. **Overlays bake at codegen-time.** The runtime has no overlay concept. This keeps `pkg/runtime` small and keeps overlay bugs from being runtime bugs.
 5. **No ambient "current host".** The host is a per-invocation input. This mirrors `gh` and avoids the classic "oops, wrong cluster" class of bug.
