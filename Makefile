@@ -62,6 +62,13 @@ fmt-check: ## Fail if any file needs gofmt
 	  exit 1; \
 	fi
 
+# ── Examples ─────────────────────────────────────────────────────────────────
+
+.PHONY: example-petstore
+
+example-petstore: ## Run petstore end-to-end example
+	bash examples/petstore/run.sh
+
 # ── Maintenance ──────────────────────────────────────────────────────────────
 
 .PHONY: tidy clean
