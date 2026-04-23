@@ -30,6 +30,7 @@ func anySliceToStrings(vs []any) []string {
 }
 
 type swaggerDoc struct {
+	Produces    []string                        `json:"produces"`
 	Definitions map[string]*schemaNode          `json:"definitions"`
 	Paths       map[string]map[string]operation `json:"paths"`
 }
@@ -41,6 +42,7 @@ type operation struct {
 	Summary     string              `json:"summary"`
 	Description string              `json:"description"`
 	Responses   map[string]response `json:"responses"`
+	Produces    []string            `json:"produces"`
 }
 
 type parameter struct {
@@ -139,13 +141,13 @@ func toRawIR(name string, doc *swaggerDoc) *rawir.RawModule {
 			if !ok {
 				continue
 			}
-			mod.Operations = append(mod.Operations, convertOp(op, m, path))
+			mod.Operations = append(mod.Operations, convertOp(op, m, path, doc.Produces))
 		}
 	}
 	return mod
 }
 
-func convertOp(op operation, method, path string) rawir.RawOperation {
+func convertOp(op operation, method, path string, docProduces []string) rawir.RawOperation {
 	out := rawir.RawOperation{
 		OperationID: op.OperationID,
 		Summary:     op.Summary,
@@ -157,6 +159,11 @@ func convertOp(op operation, method, path string) rawir.RawOperation {
 	if len(op.Tags) > 0 && op.Tags[0] != "" {
 		out.Group = op.Tags[0]
 	}
+	produces := op.Produces
+	if len(produces) == 0 {
+		produces = docProduces
+	}
+	out.Produces = produces
 	for _, p := range op.Parameters {
 		if p.In == "body" {
 			out.RequestBody = &rawir.RawRequestBody{Required: p.Required}

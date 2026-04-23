@@ -10,7 +10,8 @@
       "Path": "/health",
       "Parameters": null,
       "RequestBody": null,
-      "Responses": {}
+      "Responses": {},
+      "Produces": null
     }
   ],
   "Schemas": {}

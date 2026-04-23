@@ -73,9 +73,11 @@
             "Type": "",
             "Properties": null,
             "Items": null
-          }
+          },
+          "MediaType": ""
         }
-      }
+      },
+      "Produces": null
     }
   ],
   "Schemas": {

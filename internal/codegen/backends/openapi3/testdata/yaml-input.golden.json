@@ -22,9 +22,13 @@
               "Properties": null,
               "Items": null
             }
-          }
+          },
+          "MediaType": "application/json"
         }
-      }
+      },
+      "Produces": [
+        "application/json"
+      ]
     }
   ],
   "Schemas": {

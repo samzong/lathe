@@ -1,24 +1,24 @@
 [
   {
-    "Group": "Users",
-    "Use": "get-user",
+    "Group": "Items",
+    "Use": "list",
     "Aliases": null,
-    "Short": "Get a user by ID.",
+    "Short": "List items with pagination.",
     "Long": "",
     "Example": "",
-    "OperationID": "Users_GetUser",
+    "OperationID": "Items_List",
     "Hidden": false,
     "Deprecated": false,
     "Method": "GET",
-    "PathTpl": "/users/{id}",
+    "PathTpl": "/items",
     "Params": [
       {
-        "Name": "id",
-        "Flag": "id",
-        "In": "path",
+        "Name": "page_token",
+        "Flag": "page_token",
+        "In": "query",
         "GoType": "string",
-        "Help": "id (path, required)",
-        "Required": true,
+        "Help": "Pagination token. (query)",
+        "Required": false,
         "Default": "",
         "Enum": null,
         "Format": "",
@@ -29,7 +29,7 @@
         "Flag": "limit",
         "In": "query",
         "GoType": "int64",
-        "Help": "Max rows. (query)",
+        "Help": "Page size. (query)",
         "Required": false,
         "Default": "",
         "Enum": null,
@@ -39,13 +39,16 @@
     ],
     "RequestBody": null,
     "Output": {
-      "ListPath": "",
-      "DefaultColumns": null,
+      "ListPath": "items",
+      "DefaultColumns": [
+        "name",
+        "id"
+      ],
       "ResponseMediaType": "",
       "Pagination": {
         "Strategy": "cursor",
-        "TokenParam": "",
-        "TokenField": "",
+        "TokenParam": "page_token",
+        "TokenField": "next_page_token",
         "LimitParam": "limit"
       },
       "Streaming": null

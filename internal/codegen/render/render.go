@@ -193,13 +193,22 @@ var Specs = []runtime.CommandSpec{
 			{{- end}}
 		},
 		{{- end}}
-		{{- if or $op.Output.ListPath $op.Output.DefaultColumns $op.Output.ResponseMediaType}}
+		{{- if or $op.Output.ListPath $op.Output.DefaultColumns $op.Output.ResponseMediaType $op.Output.Pagination $op.Output.Streaming}}
 		Output: runtime.OutputHints{
 			{{- if $op.Output.ListPath}}ListPath: {{printf "%q" $op.Output.ListPath}},{{end}}
 			{{- if $op.Output.DefaultColumns}}DefaultColumns: []string{
 				{{- range $op.Output.DefaultColumns}}{{printf "%q" .}},{{end}}
 			},{{end}}
 			{{- if $op.Output.ResponseMediaType}}ResponseMediaType: {{printf "%q" $op.Output.ResponseMediaType}},{{end}}
+			{{- if $op.Output.Pagination}}Pagination: &runtime.PaginationHint{
+				Strategy: {{printf "%q" $op.Output.Pagination.Strategy}},
+				{{- if $op.Output.Pagination.TokenParam}}TokenParam: {{printf "%q" $op.Output.Pagination.TokenParam}},{{end}}
+				{{- if $op.Output.Pagination.TokenField}}TokenField: {{printf "%q" $op.Output.Pagination.TokenField}},{{end}}
+				{{- if $op.Output.Pagination.LimitParam}}LimitParam: {{printf "%q" $op.Output.Pagination.LimitParam}},{{end}}
+			},{{end}}
+			{{- if $op.Output.Streaming}}Streaming: &runtime.StreamingHint{
+				Strategy: {{printf "%q" $op.Output.Streaming.Strategy}},
+			},{{end}}
 		},
 		{{- end}}
 	},

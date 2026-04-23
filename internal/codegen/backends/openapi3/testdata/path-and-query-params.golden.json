@@ -33,7 +33,8 @@
         }
       ],
       "RequestBody": null,
-      "Responses": {}
+      "Responses": {},
+      "Produces": null
     }
   ],
   "Schemas": {}

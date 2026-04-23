@@ -20,7 +20,9 @@
         "id",
         "age"
       ],
-      "ResponseMediaType": ""
+      "ResponseMediaType": "",
+      "Pagination": null,
+      "Streaming": null
     }
   }
 ]

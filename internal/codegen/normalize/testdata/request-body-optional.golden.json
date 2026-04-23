@@ -32,7 +32,9 @@
     "Output": {
       "ListPath": "",
       "DefaultColumns": null,
-      "ResponseMediaType": ""
+      "ResponseMediaType": "",
+      "Pagination": null,
+      "Streaming": null
     }
   }
 ]

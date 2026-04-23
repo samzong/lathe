@@ -22,9 +22,11 @@
               "Properties": null,
               "Items": null
             }
-          }
+          },
+          "MediaType": ""
         }
-      }
+      },
+      "Produces": null
     },
     {
       "Group": "Pets",
@@ -54,9 +56,11 @@
             "Type": "",
             "Properties": null,
             "Items": null
-          }
+          },
+          "MediaType": ""
         }
-      }
+      },
+      "Produces": null
     }
   ],
   "Schemas": {

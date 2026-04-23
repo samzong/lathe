@@ -24,6 +24,9 @@ func TestNormalize_Golden(t *testing.T) {
 		{"multiple-methods-same-path", multipleMethodsSamePath},
 		{"param-in-header", paramInHeader},
 		{"param-in-form-data", paramInFormData},
+		{"pagination-cursor", paginationCursor},
+		{"streaming-sse", streamingSSE},
+		{"response-media-type", responseMediaType},
 	}
 
 	for _, tc := range cases {
@@ -194,6 +197,75 @@ func paramInFormData() *rawir.RawModule {
 				{Name: "file", In: "formData", Required: true, Type: "string", Description: "Binary content."},
 			},
 			Responses: map[string]*rawir.RawResponse{},
+		}},
+	}
+}
+
+func paginationCursor() *rawir.RawModule {
+	return &rawir.RawModule{
+		Name: "demo",
+		Schemas: map[string]*rawir.RawSchema{
+			"Item": {Type: "object", Properties: map[string]*rawir.RawSchema{
+				"id":   {Type: "string"},
+				"name": {Type: "string"},
+			}},
+		},
+		Operations: []rawir.RawOperation{{
+			Group:       "Items",
+			OperationID: "Items_List",
+			Summary:     "List items with pagination.",
+			Method:      "GET",
+			Path:        "/items",
+			Parameters: []rawir.RawParameter{
+				{Name: "page_token", In: "query", Type: "string", Description: "Pagination token."},
+				{Name: "limit", In: "query", Type: "integer", Description: "Page size."},
+			},
+			Responses: map[string]*rawir.RawResponse{
+				"200": {Schema: &rawir.RawSchema{
+					Type: "object",
+					Properties: map[string]*rawir.RawSchema{
+						"items":           {Type: "array", Items: &rawir.RawSchema{Ref: rawir.RefPrefix + "Item"}},
+						"next_page_token": {Type: "string"},
+					},
+				}},
+			},
+		}},
+	}
+}
+
+func streamingSSE() *rawir.RawModule {
+	return &rawir.RawModule{
+		Name: "demo",
+		Operations: []rawir.RawOperation{{
+			Group:       "Events",
+			OperationID: "Events_Watch",
+			Summary:     "Watch events.",
+			Method:      "GET",
+			Path:        "/events",
+			Produces:    []string{"text/event-stream"},
+			Responses: map[string]*rawir.RawResponse{
+				"200": {MediaType: "text/event-stream"},
+			},
+		}},
+	}
+}
+
+func responseMediaType() *rawir.RawModule {
+	return &rawir.RawModule{
+		Name: "demo",
+		Operations: []rawir.RawOperation{{
+			Group:       "Reports",
+			OperationID: "Reports_Download",
+			Summary:     "Download report.",
+			Method:      "GET",
+			Path:        "/reports/{id}/download",
+			Parameters: []rawir.RawParameter{
+				{Name: "id", In: "path", Required: true, Type: "string"},
+			},
+			Produces: []string{"application/pdf"},
+			Responses: map[string]*rawir.RawResponse{
+				"200": {MediaType: "application/pdf"},
+			},
 		}},
 	}
 }

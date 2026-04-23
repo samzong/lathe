@@ -19,9 +19,11 @@
             "Type": "",
             "Properties": null,
             "Items": null
-          }
+          },
+          "MediaType": "application/json"
         }
-      }
+      },
+      "Produces": null
     }
   ],
   "Schemas": {

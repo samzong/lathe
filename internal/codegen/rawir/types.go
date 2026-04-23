@@ -16,6 +16,7 @@ type RawOperation struct {
 	Parameters  []RawParameter
 	RequestBody *RawRequestBody
 	Responses   map[string]*RawResponse
+	Produces    []string
 }
 
 type RawParameter struct {
@@ -35,7 +36,8 @@ type RawRequestBody struct {
 }
 
 type RawResponse struct {
-	Schema *RawSchema
+	Schema    *RawSchema
+	MediaType string
 }
 
 type RawSchema struct {

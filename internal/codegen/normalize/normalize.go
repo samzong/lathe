@@ -55,6 +55,9 @@ func Normalize(mod *rawir.RawModule) []runtime.CommandSpec {
 			if itemRef != "" {
 				spec.Output.DefaultColumns = defaultColumns(itemRef, mod.Schemas)
 			}
+			spec.Output.ResponseMediaType = deriveResponseMediaType(op)
+			spec.Output.Pagination = derivePagination(op)
+			spec.Output.Streaming = deriveStreaming(op)
 			specs = append(specs, spec)
 		}
 	}
@@ -389,4 +392,95 @@ func copyVisited(in map[string]bool) map[string]bool {
 		out[k] = v
 	}
 	return out
+}
+
+func deriveResponseMediaType(op rawir.RawOperation) string {
+	if r, ok := op.Responses["200"]; ok && r != nil && r.MediaType != "" {
+		return r.MediaType
+	}
+	if len(op.Produces) > 0 {
+		return op.Produces[0]
+	}
+	return ""
+}
+
+var paginationTokenParams = map[string]bool{
+	"page_token": true, "pageToken": true,
+	"cursor": true, "after": true,
+	"offset": true, "page": true,
+}
+
+var paginationLimitParams = map[string]bool{
+	"limit": true, "page_size": true, "pageSize": true,
+	"per_page": true, "perPage": true, "maxResults": true,
+}
+
+var paginationTokenFields = map[string]bool{
+	"next_page_token": true, "nextPageToken": true,
+	"next_cursor": true, "nextCursor": true,
+	"cursor": true,
+}
+
+func derivePagination(op rawir.RawOperation) *runtime.PaginationHint {
+	if op.Method != "GET" {
+		return nil
+	}
+	var tokenParam, limitParam string
+	for _, p := range op.Parameters {
+		if p.In != "query" {
+			continue
+		}
+		if paginationTokenParams[p.Name] {
+			tokenParam = p.Name
+		}
+		if paginationLimitParams[p.Name] {
+			limitParam = p.Name
+		}
+	}
+	if tokenParam == "" && limitParam == "" {
+		return nil
+	}
+
+	strategy := "cursor"
+	if tokenParam == "offset" || tokenParam == "page" {
+		strategy = "offset"
+	}
+
+	var tokenField string
+	r, ok := op.Responses["200"]
+	if ok && r != nil && r.Schema != nil && r.Schema.Properties != nil {
+		for k := range r.Schema.Properties {
+			if paginationTokenFields[k] {
+				tokenField = k
+				break
+			}
+		}
+	}
+
+	return &runtime.PaginationHint{
+		Strategy:   strategy,
+		TokenParam: tokenParam,
+		TokenField: tokenField,
+		LimitParam: limitParam,
+	}
+}
+
+var streamingMediaTypes = map[string]string{
+	"text/event-stream":       "sse",
+	"application/x-ndjson":    "ndjson",
+	"application/stream+json": "ndjson",
+}
+
+func deriveStreaming(op rawir.RawOperation) *runtime.StreamingHint {
+	for _, ct := range op.Produces {
+		if s, ok := streamingMediaTypes[ct]; ok {
+			return &runtime.StreamingHint{Strategy: s}
+		}
+	}
+	if r, ok := op.Responses["200"]; ok && r != nil && r.MediaType != "" {
+		if s, ok := streamingMediaTypes[r.MediaType]; ok {
+			return &runtime.StreamingHint{Strategy: s}
+		}
+	}
+	return nil
 }

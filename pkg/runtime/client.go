@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -22,6 +23,7 @@ type ClientOptions struct {
 	Debug      bool
 	MaxRetries int
 	UserAgent  string
+	Accept     string
 }
 
 // BaseURL normalizes a user-facing hostname into an absolute URL base.
@@ -68,9 +70,13 @@ func HTTPClient(opts ClientOptions) *http.Client {
 	}
 }
 
-// DoRaw executes an authenticated HTTP request and returns the raw response body.
-// body may be nil, []byte (sent as-is with application/json), or any value that encodes to JSON.
-func DoRaw(ctx context.Context, hostname, method, path string, body any, opts ClientOptions) ([]byte, error) {
+type RawResult struct {
+	Body       []byte
+	StatusCode int
+	Header     http.Header
+}
+
+func DoRawFull(ctx context.Context, hostname, method, path string, body any, opts ClientOptions) (*RawResult, error) {
 	base, err := BaseURL(hostname)
 	if err != nil {
 		return nil, err
@@ -106,7 +112,11 @@ func DoRaw(ctx context.Context, hostname, method, path string, body any, opts Cl
 			return nil, fmt.Errorf("apply auth: %w", err)
 		}
 	}
-	req.Header.Set("Accept", "application/json")
+	accept := opts.Accept
+	if accept == "" {
+		accept = "application/json"
+	}
+	req.Header.Set("Accept", accept)
 	if opts.UserAgent != "" {
 		req.Header.Set("User-Agent", opts.UserAgent)
 	}
@@ -129,14 +139,26 @@ func DoRaw(ctx context.Context, hostname, method, path string, body any, opts Cl
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return data, &HTTPError{
+		return nil, &HTTPError{
 			Method: method,
 			URL:    u,
 			Status: resp.StatusCode,
 			Body:   data,
 		}
 	}
-	return data, nil
+	return &RawResult{Body: data, StatusCode: resp.StatusCode, Header: resp.Header}, nil
+}
+
+func DoRaw(ctx context.Context, hostname, method, path string, body any, opts ClientOptions) ([]byte, error) {
+	r, err := DoRawFull(ctx, hostname, method, path, body, opts)
+	if err != nil {
+		var he *HTTPError
+		if errors.As(err, &he) {
+			return he.Body, err
+		}
+		return nil, err
+	}
+	return r.Body, nil
 }
 
 type HTTPError struct {

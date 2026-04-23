@@ -1,0 +1,26 @@
+[
+  {
+    "Group": "Events",
+    "Use": "watch",
+    "Aliases": null,
+    "Short": "Watch events.",
+    "Long": "",
+    "Example": "",
+    "OperationID": "Events_Watch",
+    "Hidden": false,
+    "Deprecated": false,
+    "Method": "GET",
+    "PathTpl": "/events",
+    "Params": null,
+    "RequestBody": null,
+    "Output": {
+      "ListPath": "",
+      "DefaultColumns": null,
+      "ResponseMediaType": "text/event-stream",
+      "Pagination": null,
+      "Streaming": {
+        "Strategy": "sse"
+      }
+    }
+  }
+]

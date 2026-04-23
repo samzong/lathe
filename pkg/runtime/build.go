@@ -48,6 +48,9 @@ func buildCmd(s CommandSpec) *cobra.Command {
 	vals := make(map[string]any, len(s.Params))
 	var bodyFile string
 	var bodySets []string
+	var paginateAll bool
+	var maxPages int
+	var waitPoll bool
 
 	cmd := &cobra.Command{
 		Use:     s.Use,
@@ -156,9 +159,37 @@ func buildCmd(s CommandSpec) *cobra.Command {
 			}
 			clientOpts.UserAgent = cmd.Root().Use
 			clientOpts.Headers = hdrs
-			data, err := DoRaw(cmd.Context(), hostname, s.Method, path, body, clientOpts)
-			if err != nil {
-				return err
+			if s.Output.ResponseMediaType != "" {
+				clientOpts.Accept = s.Output.ResponseMediaType
+			}
+			var data []byte
+			if paginateAll && s.Output.Pagination != nil {
+				data, err = PaginateAll(cmd.Context(), hostname, s.Method, path, body, clientOpts, *s.Output.Pagination, s.Output.ListPath, maxPages)
+				if err != nil {
+					return err
+				}
+			} else if waitPoll {
+				r, rerr := DoRawFull(cmd.Context(), hostname, s.Method, path, body, clientOpts)
+				if rerr != nil {
+					return rerr
+				}
+				if r.StatusCode == 202 {
+					if loc := r.Header.Get("Location"); loc != "" {
+						data, err = PollUntilDone(cmd.Context(), hostname, loc, clientOpts, DefaultPollTimeout)
+						if err != nil {
+							return err
+						}
+					} else {
+						data = r.Body
+					}
+				} else {
+					data = r.Body
+				}
+			} else {
+				data, err = DoRaw(cmd.Context(), hostname, s.Method, path, body, clientOpts)
+				if err != nil {
+					return err
+				}
 			}
 			format, _ := cmd.Root().PersistentFlags().GetString("output")
 			return FormatOutput(data, format, os.Stdout, s.Output)
@@ -216,6 +247,13 @@ func buildCmd(s CommandSpec) *cobra.Command {
 		}
 		cmd.Flags().StringVarP(&bodyFile, "file", "f", "", fileHelp)
 		cmd.Flags().StringSliceVar(&bodySets, "set", nil, setHelp)
+	}
+	if s.Output.Pagination != nil {
+		cmd.Flags().BoolVar(&paginateAll, "all", false, "fetch all pages")
+		cmd.Flags().IntVar(&maxPages, "max-pages", DefaultMaxPages, "maximum pages to fetch with --all")
+	}
+	if s.Method == "POST" || s.Method == "PUT" || s.Method == "DELETE" || s.Method == "PATCH" {
+		cmd.Flags().BoolVar(&waitPoll, "wait", false, "poll until long-running operation completes")
 	}
 	cmd.Hidden = s.Hidden
 	if s.Deprecated {

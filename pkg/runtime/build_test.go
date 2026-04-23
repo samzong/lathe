@@ -123,6 +123,54 @@ func TestBuild_BodyFlagsAttachedWhenHasBody(t *testing.T) {
 	}
 }
 
+func TestBuild_PaginationFlagsAttached(t *testing.T) {
+	specs := []CommandSpec{{
+		Group:   "Items",
+		Use:     "list-items",
+		Method:  "GET",
+		PathTpl: "/items",
+		Output: OutputHints{
+			Pagination: &PaginationHint{Strategy: "cursor", TokenParam: "page_token", TokenField: "next_page_token"},
+		},
+	}}
+
+	root := newRootWithModuleGroup()
+	Build(root, "demo", specs)
+
+	svc := mustFindChild(t, root, "demo")
+	items := mustFindChild(t, svc, "items")
+	listItems := mustFindChild(t, items, "list-items")
+
+	for _, name := range []string{"all", "max-pages"} {
+		if listItems.Flag(name) == nil {
+			t.Errorf("list-items missing --%s flag", name)
+		}
+	}
+}
+
+func TestBuild_WaitFlagOnMutating(t *testing.T) {
+	specs := []CommandSpec{
+		{Group: "Resources", Use: "create-resource", Method: "POST", PathTpl: "/resources"},
+		{Group: "Resources", Use: "list-resources", Method: "GET", PathTpl: "/resources"},
+	}
+
+	root := newRootWithModuleGroup()
+	Build(root, "demo", specs)
+
+	svc := mustFindChild(t, root, "demo")
+	resources := mustFindChild(t, svc, "resources")
+
+	create := mustFindChild(t, resources, "create-resource")
+	if create.Flag("wait") == nil {
+		t.Error("create-resource (POST) should have --wait flag")
+	}
+
+	list := mustFindChild(t, resources, "list-resources")
+	if list.Flag("wait") != nil {
+		t.Error("list-resources (GET) should NOT have --wait flag")
+	}
+}
+
 func mustFindChild(t *testing.T, parent *cobra.Command, use string) *cobra.Command {
 	t.Helper()
 	for _, c := range parent.Commands() {

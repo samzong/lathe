@@ -19,7 +19,9 @@
     "Output": {
       "ListPath": "",
       "DefaultColumns": null,
-      "ResponseMediaType": ""
+      "ResponseMediaType": "",
+      "Pagination": null,
+      "Streaming": null
     }
   },
   {
@@ -39,7 +41,9 @@
     "Output": {
       "ListPath": "",
       "DefaultColumns": null,
-      "ResponseMediaType": ""
+      "ResponseMediaType": "",
+      "Pagination": null,
+      "Streaming": null
     }
   }
 ]

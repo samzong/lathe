@@ -1,6 +1,6 @@
 package runtime
 
-const SchemaVersion = 2
+const SchemaVersion = 3
 
 type CommandSpec struct {
 	Group       string
@@ -48,4 +48,17 @@ type OutputHints struct {
 	ListPath          string
 	DefaultColumns    []string
 	ResponseMediaType string
+	Pagination        *PaginationHint
+	Streaming         *StreamingHint
+}
+
+type PaginationHint struct {
+	Strategy   string
+	TokenParam string
+	TokenField string
+	LimitParam string
+}
+
+type StreamingHint struct {
+	Strategy string
 }

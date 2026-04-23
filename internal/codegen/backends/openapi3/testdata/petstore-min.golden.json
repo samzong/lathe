@@ -22,9 +22,13 @@
               "Properties": null,
               "Items": null
             }
-          }
+          },
+          "MediaType": "application/json"
         }
-      }
+      },
+      "Produces": [
+        "application/json"
+      ]
     },
     {
       "Group": "Pets",
@@ -54,9 +58,13 @@
             "Type": "",
             "Properties": null,
             "Items": null
-          }
+          },
+          "MediaType": "application/json"
         }
-      }
+      },
+      "Produces": [
+        "application/json"
+      ]
     }
   ],
   "Schemas": {

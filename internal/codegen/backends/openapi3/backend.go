@@ -219,8 +219,18 @@ func convertOp(op *operation, method, path string, pathParams []parameter) rawir
 		rs := &rawir.RawResponse{}
 		if mt, ok := resp.Content["application/json"]; ok {
 			rs.Schema = convertSchema(mt.Schema)
+			rs.MediaType = "application/json"
+		} else {
+			for ct, mt := range resp.Content {
+				rs.Schema = convertSchema(mt.Schema)
+				rs.MediaType = ct
+				break
+			}
 		}
 		out.Responses[code] = rs
+	}
+	if r, ok := out.Responses["200"]; ok && r.MediaType != "" {
+		out.Produces = []string{r.MediaType}
 	}
 	return out
 }
