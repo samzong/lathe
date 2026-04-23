@@ -7,7 +7,7 @@
 
 Feed lathe a Swagger 2.0, OpenAPI 3, or `.proto` file with `google.api.http` annotations, and it gives you back a single `cobra` binary with per-operation subcommands, hostname-keyed auth, flag-driven request bodies, and table / JSON / YAML output — no hand-written command code.
 
-> Status: v0.1-rc. Architecture finalized; version contract and error model in place.
+> Status: v0.1 feature-complete. Three backends, full IR pipeline, security scopes, pagination, streaming, overlay system.
 
 ---
 
@@ -35,6 +35,10 @@ lathe handles everything else.
 - **Output formats** — `-o table|json|yaml|raw`. Table mode auto-selects columns from the response shape.
 - **Overlay layer** — polish help text and aliases per-module without editing generated code.
 - **Reproducible** — every upstream spec pinned at an immutable tag; floating branches rejected by design. Commit SHA recorded and verified.
+- **Per-operation security** — public endpoints skip auth automatically; scoped endpoints display required OAuth scopes in `--help`.
+- **Pagination** — cursor-based pagination walking with `--all` / `--max-pages`; strategy and field mapping declared in the spec.
+- **Streaming** — Server-Sent Events via `text/event-stream`; chunked response handling.
+- **Rich parameters** — enum validation with shell completion, default values, format hints (`uuid`, `date-time`), parameter-level deprecation warnings.
 - **Extensible auth** — `Authenticator` interface with built-in Bearer and NoAuth; bring your own (API key, mTLS, SigV4).
 - **Extensible output** — `Formatter` registry; built-in table/json/yaml/raw, register custom formatters.
 - **Stable error model** — typed `LatheError` with machine-readable codes, JSON error output (`-o json`), and stable exit codes (0–4).
