@@ -1,19 +1,36 @@
 # Contributing to lathe
 
-Thanks for your interest. lathe is pre-release; expect the internals to move.
+Thanks for your interest in lathe.
+
+## Local setup
+
+```sh
+git clone https://github.com/samzong/lathe.git
+cd lathe
+make check        # fmt-check, vet, lint, test — the full quality gate
+```
+
+Requires Go (version in `go.mod`) and [`golangci-lint`](https://golangci-lint.run/). No other tooling needed.
+
+To run the end-to-end examples:
+
+```sh
+examples/petstore/run.sh    # Swagger 2.0 petstore
+examples/richapi/run.sh     # all v0.1 features
+```
 
 ## Workflow
 
 1. Fork the repo, create a feature branch off `main`.
 2. Keep the change small and focused. Split unrelated work into separate PRs.
-3. Run `make test vet` before opening the PR. New features should land with tests.
+3. Run `make check` before opening the PR. New features should land with tests.
 4. Sign off every commit with `-s`: `git commit -s -m "..."`. This attests to the Developer Certificate of Origin ([developercertificate.org](https://developercertificate.org/)).
 5. Open a PR describing the problem, the fix, and how you verified it. Link any related issue.
 
 ## Scope
 
-- **In scope**: codegen accuracy, runtime correctness, spec backend improvements, test coverage, docs, ergonomics of the identity manifest (`cli.yaml` schema).
-- **Out of scope**: new transport backends beyond Swagger 2.0 / protobuf, plugin loaders, GUI/TUI. These can ship as sibling projects on top of lathe.
+- **In scope**: codegen accuracy, runtime correctness, spec backend improvements (Swagger 2.0, OpenAPI 3, proto), test coverage, docs, `Authenticator` / `Formatter` extensions, overlay ergonomics, `cli.yaml` schema.
+- **Out of scope**: new spec formats beyond Swagger / OpenAPI / proto, plugin loaders, GUI/TUI. These can ship as sibling projects on top of lathe.
 
 ## Project conventions
 
@@ -22,9 +39,11 @@ Thanks for your interest. lathe is pre-release; expect the internals to move.
 - Don't commit generated code (`internal/generated/`) or upstream clones (`.cache/`).
 - For anything data-driven (auth endpoints, CLI identity, spec sources), prefer extending `cli.yaml` / `specs/sources.yaml` over hard-coding.
 
+For architecture details (package layout, IR pipeline, overlay matrix, extension points), see [docs/architecture.md](docs/architecture.md).
+
 ## Reporting bugs
 
-Open an issue with a minimal reproduction: the spec (or its shape), the command you ran, and what you expected vs. what happened. Logs from `-o raw` are usually more useful than `-o table`.
+Open an issue with a minimal reproduction: the spec (or its shape), the command you ran, and what you expected vs. what happened. Logs from `--debug` and `-o raw` are usually more useful than `-o table`.
 
 ## Security
 
