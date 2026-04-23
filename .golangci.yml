@@ -19,7 +19,6 @@ linters:
         - (io.Closer).Close
         - (*os.File).Close
         - (net/http.ResponseWriter).Write
-
-issues:
-  exclude-dirs:
-    - internal/generated
+  exclusions:
+    paths:
+      - internal/generated
