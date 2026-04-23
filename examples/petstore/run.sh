@@ -146,6 +146,11 @@ echo "==> Building petstore CLI..."
 go mod tidy
 go build -o bin/petstore ./cmd/petstore
 
+# Copy binary back to repo
+DEST="$LATHE_ROOT/examples/petstore/bin"
+mkdir -p "$DEST"
+cp bin/petstore "$DEST/petstore"
+
 # Demo
 echo ""
 echo "========== petstore --help =========="
@@ -154,4 +159,4 @@ echo ""
 echo "========== petstore pets --help =========="
 ./bin/petstore pets --help
 echo ""
-echo "Done. All temp files cleaned up on exit."
+echo "Done. Binary saved to examples/petstore/bin/petstore"

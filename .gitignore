@@ -7,3 +7,4 @@
 
 /.cache/
 /internal/generated/
+examples/petstore/bin/
