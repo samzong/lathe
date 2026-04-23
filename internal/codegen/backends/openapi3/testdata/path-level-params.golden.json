@@ -34,7 +34,8 @@
       ],
       "RequestBody": null,
       "Responses": {},
-      "Produces": null
+      "Produces": null,
+      "Security": null
     },
     {
       "Group": "Orgs",
@@ -60,7 +61,8 @@
         "Required": true
       },
       "Responses": {},
-      "Produces": null
+      "Produces": null,
+      "Security": null
     }
   ],
   "Schemas": {}

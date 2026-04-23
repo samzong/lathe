@@ -13,7 +13,7 @@ import (
 func TestPollUntilDone_ImmediateSuccess(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]any{"status": "done"})
+		_ = json.NewEncoder(w).Encode(map[string]any{"status": "done"})
 	}))
 	defer srv.Close()
 
@@ -41,7 +41,7 @@ func TestPollUntilDone_EventualSuccess(t *testing.T) {
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]any{"status": "done"})
+		_ = json.NewEncoder(w).Encode(map[string]any{"status": "done"})
 	}))
 	defer srv.Close()
 

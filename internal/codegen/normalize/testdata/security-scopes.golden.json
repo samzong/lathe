@@ -1,23 +1,23 @@
 [
   {
-    "Group": "Uploads",
-    "Use": "create",
+    "Group": "Pets",
+    "Use": "delete",
     "Aliases": null,
-    "Short": "Upload a file.",
+    "Short": "Delete a pet.",
     "Long": "",
     "Example": "",
-    "OperationID": "Uploads_Create",
+    "OperationID": "Pets_Delete",
     "Hidden": false,
     "Deprecated": false,
-    "Method": "POST",
-    "PathTpl": "/uploads",
+    "Method": "DELETE",
+    "PathTpl": "/pets/{id}",
     "Params": [
       {
-        "Name": "file",
-        "Flag": "file",
-        "In": "formData",
+        "Name": "id",
+        "Flag": "id",
+        "In": "path",
         "GoType": "string",
-        "Help": "Binary content. (formData, required)",
+        "Help": "id (path, required)",
         "Required": true,
         "Default": "",
         "Enum": null,
@@ -33,6 +33,12 @@
       "Pagination": null,
       "Streaming": null
     },
-    "Security": null
+    "Security": {
+      "Public": false,
+      "Scopes": [
+        "read:pets",
+        "write:pets"
+      ]
+    }
   }
 ]

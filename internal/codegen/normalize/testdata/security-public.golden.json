@@ -1,21 +1,18 @@
 [
   {
-    "Group": "Users",
-    "Use": "create-user",
+    "Group": "Health",
+    "Use": "check",
     "Aliases": null,
-    "Short": "Create a user.",
+    "Short": "Health check.",
     "Long": "",
     "Example": "",
-    "OperationID": "Users_CreateUser",
+    "OperationID": "Health_Check",
     "Hidden": false,
     "Deprecated": false,
-    "Method": "POST",
-    "PathTpl": "/users",
+    "Method": "GET",
+    "PathTpl": "/healthz",
     "Params": null,
-    "RequestBody": {
-      "Required": true,
-      "MediaType": ""
-    },
+    "RequestBody": null,
     "Output": {
       "ListPath": "",
       "DefaultColumns": null,
@@ -23,6 +20,9 @@
       "Pagination": null,
       "Streaming": null
     },
-    "Security": null
+    "Security": {
+      "Public": true,
+      "Scopes": null
+    }
   }
 ]

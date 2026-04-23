@@ -21,6 +21,7 @@
       "Streaming": {
         "Strategy": "sse"
       }
-    }
+    },
+    "Security": null
   }
 ]

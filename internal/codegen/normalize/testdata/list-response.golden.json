@@ -23,6 +23,7 @@
       "ResponseMediaType": "",
       "Pagination": null,
       "Streaming": null
-    }
+    },
+    "Security": null
   }
 ]

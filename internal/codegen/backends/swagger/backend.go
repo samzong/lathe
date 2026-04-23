@@ -33,16 +33,18 @@ type swaggerDoc struct {
 	Produces    []string                        `json:"produces"`
 	Definitions map[string]*schemaNode          `json:"definitions"`
 	Paths       map[string]map[string]operation `json:"paths"`
+	Security    []map[string][]string           `json:"security"`
 }
 
 type operation struct {
-	OperationID string              `json:"operationId"`
-	Tags        []string            `json:"tags"`
-	Parameters  []parameter         `json:"parameters"`
-	Summary     string              `json:"summary"`
-	Description string              `json:"description"`
-	Responses   map[string]response `json:"responses"`
-	Produces    []string            `json:"produces"`
+	OperationID string                 `json:"operationId"`
+	Tags        []string               `json:"tags"`
+	Parameters  []parameter            `json:"parameters"`
+	Summary     string                 `json:"summary"`
+	Description string                 `json:"description"`
+	Responses   map[string]response    `json:"responses"`
+	Produces    []string               `json:"produces"`
+	Security    *[]map[string][]string `json:"security"`
 }
 
 type parameter struct {
@@ -141,13 +143,13 @@ func toRawIR(name string, doc *swaggerDoc) *rawir.RawModule {
 			if !ok {
 				continue
 			}
-			mod.Operations = append(mod.Operations, convertOp(op, m, path, doc.Produces))
+			mod.Operations = append(mod.Operations, convertOp(op, m, path, doc.Produces, doc.Security))
 		}
 	}
 	return mod
 }
 
-func convertOp(op operation, method, path string, docProduces []string) rawir.RawOperation {
+func convertOp(op operation, method, path string, docProduces []string, globalSecurity []map[string][]string) rawir.RawOperation {
 	out := rawir.RawOperation{
 		OperationID: op.OperationID,
 		Summary:     op.Summary,
@@ -183,6 +185,29 @@ func convertOp(op operation, method, path string, docProduces []string) rawir.Ra
 	}
 	for code, resp := range op.Responses {
 		out.Responses[code] = &rawir.RawResponse{Schema: convertSchema(resp.Schema)}
+	}
+	sec := globalSecurity
+	if op.Security != nil {
+		sec = *op.Security
+	}
+	out.Security = convertSecurity(sec)
+	return out
+}
+
+func convertSecurity(sec []map[string][]string) []rawir.RawSecurityReq {
+	if sec == nil {
+		return nil
+	}
+	var out []rawir.RawSecurityReq
+	for _, req := range sec {
+		var scopes []string
+		for _, s := range req {
+			scopes = append(scopes, s...)
+		}
+		out = append(out, rawir.RawSecurityReq{Scopes: scopes})
+	}
+	if out == nil {
+		out = []rawir.RawSecurityReq{}
 	}
 	return out
 }

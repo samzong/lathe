@@ -28,7 +28,8 @@
       },
       "Produces": [
         "application/json"
-      ]
+      ],
+      "Security": null
     },
     {
       "Group": "Pets",
@@ -64,7 +65,8 @@
       },
       "Produces": [
         "application/json"
-      ]
+      ],
+      "Security": null
     }
   ],
   "Schemas": {

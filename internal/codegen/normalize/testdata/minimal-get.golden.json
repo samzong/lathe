@@ -49,6 +49,7 @@
         "LimitParam": "limit"
       },
       "Streaming": null
-    }
+    },
+    "Security": null
   }
 ]

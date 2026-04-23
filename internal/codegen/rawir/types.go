@@ -17,6 +17,11 @@ type RawOperation struct {
 	RequestBody *RawRequestBody
 	Responses   map[string]*RawResponse
 	Produces    []string
+	Security    []RawSecurityReq
+}
+
+type RawSecurityReq struct {
+	Scopes []string
 }
 
 type RawParameter struct {

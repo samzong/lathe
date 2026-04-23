@@ -59,7 +59,14 @@ func buildCmd(s CommandSpec) *cobra.Command {
 		Long:    s.Long,
 		Example: s.Example,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			hostname, clientOpts, err := LoadHostOptions(cmd)
+			var hostname string
+			var clientOpts ClientOptions
+			var err error
+			if s.Security != nil && s.Security.Public {
+				hostname, clientOpts, err = TryLoadHostOptions(cmd)
+			} else {
+				hostname, clientOpts, err = LoadHostOptions(cmd)
+			}
 			if err != nil {
 				return err
 			}
@@ -258,6 +265,9 @@ func buildCmd(s CommandSpec) *cobra.Command {
 	cmd.Hidden = s.Hidden
 	if s.Deprecated {
 		cmd.Deprecated = "this command is deprecated"
+	}
+	if s.Security != nil && len(s.Security.Scopes) > 0 {
+		cmd.Long = fmt.Sprintf("%s\n\nRequired scopes: %s", cmd.Short, strings.Join(s.Security.Scopes, ", "))
 	}
 	return cmd
 }

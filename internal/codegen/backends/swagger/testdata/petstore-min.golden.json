@@ -26,7 +26,8 @@
           "MediaType": ""
         }
       },
-      "Produces": null
+      "Produces": null,
+      "Security": null
     },
     {
       "Group": "Pets",
@@ -60,7 +61,8 @@
           "MediaType": ""
         }
       },
-      "Produces": null
+      "Produces": null,
+      "Security": null
     }
   ],
   "Schemas": {

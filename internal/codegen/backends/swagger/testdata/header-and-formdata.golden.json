@@ -34,7 +34,8 @@
       ],
       "RequestBody": null,
       "Responses": {},
-      "Produces": null
+      "Produces": null,
+      "Security": null
     }
   ],
   "Schemas": {}

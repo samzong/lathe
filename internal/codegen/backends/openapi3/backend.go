@@ -14,8 +14,9 @@ import (
 )
 
 type oas3Doc struct {
-	Paths      map[string]*pathItem `json:"paths" yaml:"paths"`
-	Components *components          `json:"components,omitempty" yaml:"components,omitempty"`
+	Paths      map[string]*pathItem  `json:"paths" yaml:"paths"`
+	Components *components           `json:"components,omitempty" yaml:"components,omitempty"`
+	Security   []map[string][]string `json:"security,omitempty" yaml:"security,omitempty"`
 }
 
 type components struct {
@@ -32,13 +33,14 @@ type pathItem struct {
 }
 
 type operation struct {
-	OperationID string              `json:"operationId" yaml:"operationId"`
-	Tags        []string            `json:"tags" yaml:"tags"`
-	Summary     string              `json:"summary" yaml:"summary"`
-	Description string              `json:"description" yaml:"description"`
-	Parameters  []parameter         `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	RequestBody *requestBody        `json:"requestBody,omitempty" yaml:"requestBody,omitempty"`
-	Responses   map[string]response `json:"responses" yaml:"responses"`
+	OperationID string                 `json:"operationId" yaml:"operationId"`
+	Tags        []string               `json:"tags" yaml:"tags"`
+	Summary     string                 `json:"summary" yaml:"summary"`
+	Description string                 `json:"description" yaml:"description"`
+	Parameters  []parameter            `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	RequestBody *requestBody           `json:"requestBody,omitempty" yaml:"requestBody,omitempty"`
+	Responses   map[string]response    `json:"responses" yaml:"responses"`
+	Security    *[]map[string][]string `json:"security,omitempty" yaml:"security,omitempty"`
 }
 
 type parameter struct {
@@ -180,13 +182,13 @@ func toRawIR(name string, doc *oas3Doc) *rawir.RawModule {
 			if pair.op == nil {
 				continue
 			}
-			mod.Operations = append(mod.Operations, convertOp(pair.op, pair.method, path, pathParams))
+			mod.Operations = append(mod.Operations, convertOp(pair.op, pair.method, path, pathParams, doc.Security))
 		}
 	}
 	return mod
 }
 
-func convertOp(op *operation, method, path string, pathParams []parameter) rawir.RawOperation {
+func convertOp(op *operation, method, path string, pathParams []parameter, globalSecurity []map[string][]string) rawir.RawOperation {
 	out := rawir.RawOperation{
 		OperationID: op.OperationID,
 		Summary:     op.Summary,
@@ -231,6 +233,29 @@ func convertOp(op *operation, method, path string, pathParams []parameter) rawir
 	}
 	if r, ok := out.Responses["200"]; ok && r.MediaType != "" {
 		out.Produces = []string{r.MediaType}
+	}
+	sec := globalSecurity
+	if op.Security != nil {
+		sec = *op.Security
+	}
+	out.Security = convertSecurity(sec)
+	return out
+}
+
+func convertSecurity(sec []map[string][]string) []rawir.RawSecurityReq {
+	if sec == nil {
+		return nil
+	}
+	var out []rawir.RawSecurityReq
+	for _, req := range sec {
+		var scopes []string
+		for _, s := range req {
+			scopes = append(scopes, s...)
+		}
+		out = append(out, rawir.RawSecurityReq{Scopes: scopes})
+	}
+	if out == nil {
+		out = []rawir.RawSecurityReq{}
 	}
 	return out
 }

@@ -23,7 +23,8 @@
           "MediaType": ""
         }
       },
-      "Produces": null
+      "Produces": null,
+      "Security": null
     }
   ],
   "Schemas": {

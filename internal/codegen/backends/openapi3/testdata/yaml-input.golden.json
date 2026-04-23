@@ -28,7 +28,8 @@
       },
       "Produces": [
         "application/json"
-      ]
+      ],
+      "Security": null
     }
   ],
   "Schemas": {

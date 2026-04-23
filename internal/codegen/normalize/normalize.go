@@ -58,6 +58,7 @@ func Normalize(mod *rawir.RawModule) []runtime.CommandSpec {
 			spec.Output.ResponseMediaType = deriveResponseMediaType(op)
 			spec.Output.Pagination = derivePagination(op)
 			spec.Output.Streaming = deriveStreaming(op)
+			spec.Security = deriveSecurity(op)
 			specs = append(specs, spec)
 		}
 	}
@@ -483,4 +484,25 @@ func deriveStreaming(op rawir.RawOperation) *runtime.StreamingHint {
 		}
 	}
 	return nil
+}
+
+func deriveSecurity(op rawir.RawOperation) *runtime.SecurityHint {
+	if op.Security == nil {
+		return nil
+	}
+	if len(op.Security) == 0 {
+		return &runtime.SecurityHint{Public: true}
+	}
+	seen := map[string]bool{}
+	var scopes []string
+	for _, req := range op.Security {
+		for _, s := range req.Scopes {
+			if !seen[s] {
+				seen[s] = true
+				scopes = append(scopes, s)
+			}
+		}
+	}
+	sort.Strings(scopes)
+	return &runtime.SecurityHint{Scopes: scopes}
 }

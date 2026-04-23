@@ -1,6 +1,6 @@
 package runtime
 
-const SchemaVersion = 3
+const SchemaVersion = 4
 
 type CommandSpec struct {
 	Group       string
@@ -17,6 +17,7 @@ type CommandSpec struct {
 	Params      []ParamSpec
 	RequestBody *RequestBody
 	Output      OutputHints
+	Security    *SecurityHint
 }
 
 type ParamSpec struct {
@@ -61,4 +62,9 @@ type PaginationHint struct {
 
 type StreamingHint struct {
 	Strategy string
+}
+
+type SecurityHint struct {
+	Public bool
+	Scopes []string
 }

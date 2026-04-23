@@ -74,3 +74,30 @@ func LoadHostOptions(cmd *cobra.Command) (string, ClientOptions, error) {
 	}
 	return hostname, opts, nil
 }
+
+func TryLoadHostOptions(cmd *cobra.Command) (string, ClientOptions, error) {
+	hostname, err := ResolveHost(cmd)
+	if err != nil {
+		return "", ClientOptions{}, err
+	}
+	hosts, err := config.LoadHosts()
+	if err != nil {
+		return hostname, ClientOptions{}, nil
+	}
+	e, ok := hosts.Get(hostname)
+	if !ok {
+		opts := ClientOptions{}
+		if v, err := cmd.Root().PersistentFlags().GetBool("insecure"); err == nil && v {
+			opts.Insecure = true
+		}
+		return hostname, opts, nil
+	}
+	opts := ClientOptions{
+		Auth:     BearerAuth{Token: e.OAuthToken},
+		Insecure: e.Insecure,
+	}
+	if v, err := cmd.Root().PersistentFlags().GetBool("insecure"); err == nil && v {
+		opts.Insecure = true
+	}
+	return hostname, opts, nil
+}

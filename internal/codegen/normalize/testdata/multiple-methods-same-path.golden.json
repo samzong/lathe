@@ -22,7 +22,8 @@
       "ResponseMediaType": "",
       "Pagination": null,
       "Streaming": null
-    }
+    },
+    "Security": null
   },
   {
     "Group": "Resources",
@@ -44,6 +45,7 @@
       "ResponseMediaType": "",
       "Pagination": null,
       "Streaming": null
-    }
+    },
+    "Security": null
   }
 ]

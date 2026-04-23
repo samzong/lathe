@@ -24,7 +24,7 @@ func TestPaginateAll_Cursor(t *testing.T) {
 		}
 		atomic.AddInt32(&call, 1)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(pages[idx])
+		_ = json.NewEncoder(w).Encode(pages[idx])
 	}))
 	defer srv.Close()
 
@@ -51,7 +51,7 @@ func TestPaginateAll_Offset(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		off := 0
 		if v := r.URL.Query().Get("offset"); v != "" {
-			fmt.Sscanf(v, "%d", &off)
+			_, _ = fmt.Sscanf(v, "%d", &off)
 		}
 		end := off + 2
 		if end > len(allItems) {
@@ -62,7 +62,7 @@ func TestPaginateAll_Offset(t *testing.T) {
 			page = allItems[off:end]
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]any{"data": page})
+		_ = json.NewEncoder(w).Encode(map[string]any{"data": page})
 	}))
 	defer srv.Close()
 
@@ -84,7 +84,7 @@ func TestPaginateAll_Offset(t *testing.T) {
 func TestPaginateAll_MaxPages(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]any{
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"items":           []any{map[string]any{"id": "x"}},
 			"next_page_token": "always",
 		})

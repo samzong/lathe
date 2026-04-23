@@ -32,6 +32,7 @@
       "ResponseMediaType": "application/pdf",
       "Pagination": null,
       "Streaming": null
-    }
+    },
+    "Security": null
   }
 ]

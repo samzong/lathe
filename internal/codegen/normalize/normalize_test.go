@@ -27,6 +27,8 @@ func TestNormalize_Golden(t *testing.T) {
 		{"pagination-cursor", paginationCursor},
 		{"streaming-sse", streamingSSE},
 		{"response-media-type", responseMediaType},
+		{"security-public", securityPublic},
+		{"security-scopes", securityScopes},
 	}
 
 	for _, tc := range cases {
@@ -265,6 +267,41 @@ func responseMediaType() *rawir.RawModule {
 			Produces: []string{"application/pdf"},
 			Responses: map[string]*rawir.RawResponse{
 				"200": {MediaType: "application/pdf"},
+			},
+		}},
+	}
+}
+
+func securityPublic() *rawir.RawModule {
+	return &rawir.RawModule{
+		Name: "demo",
+		Operations: []rawir.RawOperation{{
+			Group:       "Health",
+			OperationID: "Health_Check",
+			Summary:     "Health check.",
+			Method:      "GET",
+			Path:        "/healthz",
+			Responses:   map[string]*rawir.RawResponse{},
+			Security:    []rawir.RawSecurityReq{},
+		}},
+	}
+}
+
+func securityScopes() *rawir.RawModule {
+	return &rawir.RawModule{
+		Name: "demo",
+		Operations: []rawir.RawOperation{{
+			Group:       "Pets",
+			OperationID: "Pets_Delete",
+			Summary:     "Delete a pet.",
+			Method:      "DELETE",
+			Path:        "/pets/{id}",
+			Parameters: []rawir.RawParameter{
+				{Name: "id", In: "path", Required: true, Type: "string"},
+			},
+			Responses: map[string]*rawir.RawResponse{},
+			Security: []rawir.RawSecurityReq{
+				{Scopes: []string{"write:pets", "read:pets"}},
 			},
 		}},
 	}

@@ -23,7 +23,8 @@
           "MediaType": "application/json"
         }
       },
-      "Produces": null
+      "Produces": null,
+      "Security": null
     }
   ],
   "Schemas": {
