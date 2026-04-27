@@ -67,3 +67,19 @@ func TestRegisterFormatter(t *testing.T) {
 		t.Errorf("got %q, want test", buf.String())
 	}
 }
+
+func TestFormatterNames(t *testing.T) {
+	RegisterFormatter("custom", rawFormatter{})
+	defer delete(formatters, "custom")
+
+	got := FormatterNames()
+	want := []string{"table", "json", "yaml", "raw", "custom"}
+	if len(got) != len(want) {
+		t.Fatalf("got %v, want %v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("got %v, want %v", got, want)
+		}
+	}
+}

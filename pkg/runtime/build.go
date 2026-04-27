@@ -39,6 +39,7 @@ func Build(root *cobra.Command, service string, specs []CommandSpec) {
 			svc.AddCommand(g)
 		}
 		c := buildCmd(s)
+		AttachCatalogCommand(c, service, s)
 		g.AddCommand(c)
 	}
 	root.AddCommand(svc)

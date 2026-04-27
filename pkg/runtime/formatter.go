@@ -1,6 +1,9 @@
 package runtime
 
-import "io"
+import (
+	"io"
+	"sort"
+)
 
 type Formatter interface {
 	Format(w io.Writer, data []byte, hints OutputHints) error
@@ -15,8 +18,38 @@ var formatters = map[string]Formatter{
 	"raw":   rawFormatter{},
 }
 
+var formatterAliases = map[string]string{"yml": "yaml"}
+
 func RegisterFormatter(name string, f Formatter) {
 	formatters[name] = f
+}
+
+func FormatterNames() []string {
+	canonical := []string{"table", "json", "yaml", "raw"}
+	seen := map[string]struct{}{}
+	names := make([]string, 0, len(formatters))
+	for _, name := range canonical {
+		if _, ok := formatters[name]; ok {
+			names = append(names, name)
+			seen[name] = struct{}{}
+		}
+	}
+	extra := make([]string, 0)
+	for name := range formatters {
+		if name == "" {
+			continue
+		}
+		if _, ok := formatterAliases[name]; ok {
+			continue
+		}
+		if _, ok := seen[name]; ok {
+			continue
+		}
+		extra = append(extra, name)
+	}
+	sort.Strings(extra)
+	names = append(names, extra...)
+	return names
 }
 
 type tableFormatter struct{}

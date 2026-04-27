@@ -38,6 +38,8 @@ func NewApp(m *config.Manifest) *cobra.Command {
 	authCmd := auth.NewCommand(m)
 	authCmd.GroupID = authGroupID
 	cmd.AddCommand(authCmd)
+	cmd.AddCommand(commandsCmd(m))
+	cmd.AddCommand(searchCmd(m))
 	cmd.AddCommand(versionCmd())
 	return cmd
 }
