@@ -167,6 +167,21 @@ Grouping into subcommand trees:
 | `--insecure` | Skip TLS certificate verification |
 | `--debug` | Print HTTP request/response to stderr |
 
+### Command discovery
+
+Generated CLIs expose their command tree as structured data:
+
+```sh
+acmectl commands --json
+acmectl commands show iam users create-user --json
+acmectl search "create user" --json
+```
+
+Use `commands --json` as the source of truth for generated command paths,
+flags, HTTP methods, request paths, body requirements, auth scopes, and output
+hints. Use `search --json` only to find candidates, then use
+`commands show <path...> --json` before executing an unfamiliar command.
+
 ---
 
 ## Design principles
