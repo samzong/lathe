@@ -59,7 +59,7 @@ func HTTPClient(opts ClientOptions) *http.Client {
 		maxRetries = 3
 	}
 	if maxRetries > 0 {
-		transport = &retryTransport{inner: transport, maxRetries: maxRetries}
+		transport = &retryTransport{inner: transport, maxRetries: maxRetries, debug: opts.Debug}
 	}
 	if opts.Debug {
 		transport = &debugTransport{inner: transport}
