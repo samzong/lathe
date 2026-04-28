@@ -1,8 +1,10 @@
 package runtime
 
 import (
+	"fmt"
 	"math"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 )
@@ -11,6 +13,7 @@ type retryTransport struct {
 	inner      http.RoundTripper
 	maxRetries int
 	sleepFn    func(time.Duration)
+	debug      bool
 }
 
 func (t *retryTransport) RoundTrip(req *http.Request) (*http.Response, error) {
@@ -20,6 +23,15 @@ func (t *retryTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	for attempt := 0; attempt <= t.maxRetries; attempt++ {
 		if attempt > 0 {
 			wait := retryBackoff(attempt, resp)
+			if t.debug {
+				reason := "backoff"
+				if resp != nil {
+					if ra := resp.Header.Get("Retry-After"); ra != "" {
+						reason = "Retry-After=" + ra
+					}
+				}
+				fmt.Fprintf(os.Stderr, "[retry %d/%d] %s - waiting %s (%s)\n", attempt, t.maxRetries, resp.Status, wait, reason)
+			}
 			if t.sleepFn != nil {
 				t.sleepFn(wait)
 			} else {
