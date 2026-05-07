@@ -48,6 +48,32 @@ func TestBuildBodyFromSet(t *testing.T) {
 	}
 }
 
+func TestBuildBodyFromSet_SetStrKeepsStrings(t *testing.T) {
+	raw, err := buildBodyFromSet(
+		[]string{"spec.replicas=3", "spec.enabled=true"},
+		[]string{"spec.stringReplicas=3", "spec.stringEnabled=true", "metadata.name=demo"},
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	var got map[string]any
+	if err := json.Unmarshal(raw, &got); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	want := map[string]any{
+		"spec": map[string]any{
+			"replicas":       float64(3),
+			"enabled":        true,
+			"stringReplicas": "3",
+			"stringEnabled":  "true",
+		},
+		"metadata": map[string]any{"name": "demo"},
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("got %#v, want %#v", got, want)
+	}
+}
+
 func TestBuildBodyFromSet_Errors(t *testing.T) {
 	cases := []struct {
 		name string

@@ -23,21 +23,42 @@ func ReadBody(path string) ([]byte, error) {
 // otherwise string. No schema validation — runtime stays schema-agnostic;
 // the spec only carries a SchemaRef for future use.
 func BuildBodyFromSet(sets []string) ([]byte, error) {
+	return buildBodyFromSet(sets, nil)
+}
+
+func buildBodyFromSet(sets []string, stringSets []string) ([]byte, error) {
 	out := map[string]any{}
 	for _, kv := range sets {
-		eq := strings.Index(kv, "=")
-		if eq < 0 {
-			return nil, fmt.Errorf("invalid --set %q (expected key=value)", kv)
+		path, value, err := parseSet(kv, "--set")
+		if err != nil {
+			return nil, err
 		}
-		path := kv[:eq]
-		if path == "" {
-			return nil, fmt.Errorf("invalid --set %q (empty key)", kv)
+		if err := setNested(out, strings.Split(path, "."), inferValue(value)); err != nil {
+			return nil, err
 		}
-		if err := setNested(out, strings.Split(path, "."), inferValue(kv[eq+1:])); err != nil {
+	}
+	for _, kv := range stringSets {
+		path, value, err := parseSet(kv, "--set-str")
+		if err != nil {
+			return nil, err
+		}
+		if err := setNested(out, strings.Split(path, "."), value); err != nil {
 			return nil, err
 		}
 	}
 	return json.Marshal(out)
+}
+
+func parseSet(kv string, flag string) (string, string, error) {
+	eq := strings.Index(kv, "=")
+	if eq < 0 {
+		return "", "", fmt.Errorf("invalid %s %q (expected key=value)", flag, kv)
+	}
+	path := kv[:eq]
+	if path == "" {
+		return "", "", fmt.Errorf("invalid %s %q (empty key)", flag, kv)
+	}
+	return path, kv[eq+1:], nil
 }
 
 func setNested(m map[string]any, keys []string, v any) error {

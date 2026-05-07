@@ -46,4 +46,4 @@ See the [Quick start](../../README.md#quick-start) in the main README. The key f
 
 - **`cli.yaml`** — CLI name, description, auth endpoint
 - **`specs/sources.yaml`** — upstream specs pinned at immutable tags
-- **`cmd/<name>/main.go`** — embed `cli.yaml`, call `lathe.NewApp` + `generated.MountModules`
+- **`cmd/<name>/main.go`** — embed `cli.yaml`, call `lathe.NewApp`, then handle `generated.MountModules` errors
