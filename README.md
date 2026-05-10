@@ -2,50 +2,68 @@
 
 # lathe
 
-> Turn any API spec into a polished CLI.
+> Build agent-friendly, single-binary CLIs from any API specs.
 
 [![CI](https://github.com/samzong/lathe/actions/workflows/ci.yml/badge.svg)](https://github.com/samzong/lathe/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Feed lathe a Swagger 2.0, OpenAPI 3, or `.proto` file with `google.api.http` annotations, and it gives you back a single `cobra` binary with per-operation subcommands, hostname-keyed auth, flag-driven request bodies, and table / JSON / YAML output — no hand-written command code.
+Lathe turns Swagger 2.0, OpenAPI 3, and `google.api.http` protobuf APIs into
+production-grade Cobra CLIs. The generated binary is useful for humans, but it
+is also built for agents: every command can be discovered, inspected, validated,
+and executed through machine-readable contracts.
+
+```sh
+acmectl search "create user" --json
+acmectl commands show iam users create-user --json
+acmectl auth status --hostname api.acme.com
+acmectl iam users create-user --set email=alice@example.com -o json
+```
+
+Generated CLIs ship with command catalog JSON, intent search, per-command detail
+JSON, auth metadata, body builders, structured output formats, and a repo-local
+Skill directory under `skills/<cli-name>/`.
 
 ![lathe architecture](docs/images/architecture.png)
 
 ---
 
-## Why
+## Why Lathe
 
-Every service with a published API ends up wanting a CLI. Teams routinely burn weeks writing commands that mirror an existing Swagger or protobuf spec 1:1 — a duplication that silently rots the moment the spec evolves.
+Every serious API eventually needs a CLI. Most teams still hand-write command
+trees that mirror an existing API spec, then spend the rest of the project's
+life keeping those commands from drifting.
 
-If the spec is the source of truth, the CLI should be derived from it, not transcribed.
+Lathe makes the API spec the source of truth.
 
-lathe treats the spec as input and the CLI as output. Your job shrinks to:
+You pin upstream specs, declare the CLI identity, add optional help-text
+overlays, and generate the binary. When the API changes, bump the pinned tag and
+regenerate.
 
-- pin the upstream spec at a tag,
-- declare a few identity fields (CLI name, auth endpoint),
-- optionally overlay help text where the spec's wording is weak.
+The result is not just a wrapper. It is an agentic-friendly CLI surface with a
+runtime catalog that tells agents what commands exist, which flags are required,
+whether auth is needed, what HTTP request will be made, how request bodies are
+built, and which output format to prefer.
 
-lathe handles everything else.
+## What You Get
 
----
+| Capability | What it means |
+|---|---|
+| Multi-backend generation | Swagger 2.0, OpenAPI 3, and protobuf services with `google.api.http` annotations become Cobra command trees. |
+| Single runtime shape | Generated modules share one runtime for auth, request building, output formatting, pagination, streaming, and error handling. |
+| Agentic-friendly discovery | `search`, `commands --json`, `commands show`, and `commands schema` expose the CLI as structured data. |
+| Generated Skills | Codegen writes `skills/<cli-name>/` so agents can load the CLI's operating guide and module references. |
+| Reproducible inputs | Specs are pinned by tag, resolved to commit SHA, and regenerated from checked-in configuration. |
+| Real CLI UX | Hostname-keyed auth, --file, --set, --set-str, -o table\|json\|yaml\|raw, enum validation, pagination, streaming, and --debug. |
+| Overlay polish | Improve summaries, aliases, parameter help, grouping, and examples without editing generated code. |
 
-## Features
+## Quick Start
 
-- **Three native backends** — Swagger 2.0, OpenAPI 3, and `.proto` (with `google.api.http`). Each consumed in its real form; no cross-transcoding.
-- **Reproducible** — every spec pinned at an immutable tag; floating branches rejected. Commit SHA recorded and verified.
-- **Hostname-keyed auth** — per-host credentials modeled on `gh`. Public endpoints skip auth; scoped endpoints show required OAuth scopes.
-- **Rich CLI** — body builder (`--file`, `--set`, `--set-str`), `-o table|json|yaml|raw`, enum validation, cursor-based pagination (`--all`), SSE streaming, parameter defaults and deprecation warnings.
-- **Overlay layer** — polish help text, aliases, and examples per-module without editing generated code.
-- **Extensible** — `Authenticator` and `Formatter` interfaces for custom auth schemes and output formats.
-- **Production-ready** — typed error model with stable exit codes (0–4), `--debug` HTTP tracing, schema version contract between generated code and runtime.
+Create a repository from [github.com/samzong/lathe](https://github.com/samzong/lathe),
+then configure two files.
 
----
+### 1. Define the CLI
 
-## Quick start
-
-Click **"Use this template"** on [github.com/samzong/lathe](https://github.com/samzong/lathe), then populate two files and run `make`.
-
-### `cli.yaml` — CLI identity
+`cli.yaml`:
 
 ```yaml
 cli:
@@ -61,7 +79,9 @@ auth:
       fallback_field: data.email
 ```
 
-### `specs/sources.yaml` — pin upstream specs
+### 2. Pin API Sources
+
+`specs/sources.yaml`:
 
 ```yaml
 sources:
@@ -93,115 +113,190 @@ sources:
         - api/openapi.yaml
 ```
 
-### `internal/overlay/<module>.yaml` — polish help text (optional)
+### 3. Generate and Build
+
+```sh
+make bootstrap
+go build -o bin/acmectl ./cmd/acmectl
+```
+
+`make bootstrap` syncs pinned specs and runs codegen. Codegen emits generated Go
+modules and, by default, a Skill directory at `skills/acmectl/`.
+
+### 4. Use the CLI
+
+```sh
+./bin/acmectl auth login --hostname api.acme.com
+./bin/acmectl iam users create-user \
+  --set email=alice@example.com \
+  --set role=viewer \
+  -o json
+```
+
+## Agentic-Friendly CLI Surface
+
+Generated CLIs are designed so an agent does not have to guess.
+
+| Command | Purpose |
+|---|---|
+| `<cli> search "<intent>" --json` | Find candidate commands from natural-language intent. Supports `--limit`. Search output is for discovery only. |
+| `<cli> commands --json` | Read the complete generated command catalog. Use `--include-hidden` when hidden commands matter. |
+| `<cli> commands show <path...> --json` | Inspect the source of truth for one command before execution: flags, body, auth, HTTP method/path, and output hints. |
+| `<cli> commands schema --json` | Check the catalog schema version before durable machine parsing. |
+| `<cli> auth status --hostname <host>` | Confirm credentials before running a command whose detail says `auth.required=true`. |
+
+Recommended agent loop:
+
+1. Use `search "<intent>" --json` to find candidates.
+2. Use `commands show <path...> --json` for the selected command.
+3. If `auth.required=true`, run `auth status --hostname <host>` and stop if the user is not logged in.
+4. Execute only after flags, body requirements, auth, HTTP path, and output hints are clear.
+5. Prefer `-o json` for machine-readable command output unless the user asked for a human-readable table.
+
+## Generated Skill Directory
+
+Codegen writes a standard Skill directory by default:
+
+```text
+skills/<cli-name>/
+|-- SKILL.md
+|-- agents/openai.yaml
+`-- references/
+    |-- catalog.md
+    `-- modules/<source-name>.md
+```
+
+The Skill is a compact operating guide for agents. It explains command
+discovery, catalog inspection, auth preflight, body input, output formats, and
+per-source module references.
+
+The runtime catalog remains the source of truth. Agents should use the Skill to
+learn how to operate the CLI, then use `commands show <path...> --json` for exact
+execution details.
+
+Disable Skill output when needed:
+
+```sh
+go run ./cmd/codegen -skill-root ""
+```
+
+## Configuration
+
+### `cli.yaml`
+
+Defines CLI identity and optional auth validation behavior.
+
+| Field | Notes |
+|---|---|
+| `cli.name` | Binary and command name, for example `acmectl`. |
+| `cli.short` | Root command summary. |
+| `auth.validate` | Optional endpoint used by `auth status` to display the logged-in user. |
+
+### `specs/sources.yaml`
+
+Declares which upstream specs become modules.
+
+| Field | Required | Notes |
+|---|---|---|
+| `repo_url` | Yes | Any URL `git clone` accepts. |
+| `pinned_tag` | Yes | Floating branches are rejected; reproducibility is mandatory. |
+| `backend` | Yes | One of `swagger`, `openapi3`, or `proto`. |
+| `swagger.files` | Swagger only | One or more Swagger 2.0 JSON specs. |
+| `openapi3.files` | OpenAPI 3 only | JSON or YAML OpenAPI specs. |
+| `proto.staging` | Proto only | Files staged into the `protoc` include root before parsing. |
+| `proto.entries` | Proto only | Entry proto files; only RPCs with `google.api.http` become commands. |
+
+Grouping rules:
+
+- Swagger and OpenAPI 3 use the operation's first tag.
+- Proto uses the service name.
+
+### Overlays
+
+Overlays polish generated commands without changing the upstream spec or editing
+generated Go code.
+
+`internal/overlay/iam.yaml`:
 
 ```yaml
-# internal/overlay/iam.yaml
 commands:
   create-user:
     short: "Create a user in the IAM service"
     aliases: [adduser]
     example: |
       acmectl iam create-user \
-        --email alice@example.com \
-        --role viewer
+        --set email=alice@example.com \
+        --set role=viewer
     params:
       role:
         help: "User role (viewer, editor, admin)"
         default: viewer
 ```
 
-Overlays are baked into generated code at codegen time — the runtime knows nothing about them. Pass `-overlay internal/overlay` to codegen.
-
-### Build
+Run codegen with an overlay directory:
 
 ```sh
-make bootstrap          # sync-specs + gen
-go build -o bin/acmectl ./cmd/acmectl
-
-./bin/acmectl auth login --hostname acme.example.com
-./bin/acmectl iam create-user --email alice@example.com --role viewer
+go run ./cmd/codegen -overlay internal/overlay
 ```
 
-Re-run `make bootstrap` whenever you bump a `pinned_tag`.
+## Runtime Features
 
-Codegen also emits `skills/<cli-name>/`, a standard Skill directory agents can
-load as a quick guide to the generated CLI. The Skill explains discovery,
-auth preflight, and module references; the runtime catalog remains the source
-of truth for exact command flags and request shapes.
-
----
-
-## Sources reference
-
-`specs/sources.yaml` declares which upstream specs become modules in your CLI.
-
-| Field | Required | Notes |
-|---|---|---|
-| `repo_url` | ✓ | Any URL `git clone` accepts |
-| `pinned_tag` | ✓ | Floating branches rejected — reproducibility is mandatory |
-| `backend` | ✓ | `swagger`, `openapi3`, or `proto` (exclusive) |
-| `swagger.files` | swagger only | Multiple files merge; duplicates warn, first-seen wins |
-| `openapi3.files` | openapi3 only | JSON or YAML; multiple files merge; `$ref` resolved within each file |
-| `proto.staging` | proto only | Stage files into a protoc include root |
-| `proto.entries` | proto only | Only RPCs with `google.api.http` become commands |
-
-Grouping into subcommand trees:
-
-- **Swagger / OpenAPI 3** — uses the operation's first `tag`.
-- **Proto** — uses the `service` name.
-
----
-
-## Configuration
-
-| Env var | Effect |
-|---|---|
-| `$<NAME>_HOST` | Select host without editing `hosts.yml` |
-| `$<NAME>_CONFIG_DIR` | Override config dir (default `~/.config/<name>`) |
-| `LATHE_SPECS_CACHE` | Where `make sync-specs` stages specs (default `.cache`) |
-
-`<NAME>` is the uppercased `cli.name`.
-
-### Global flags
+### Global Flags
 
 | Flag | Effect |
 |---|---|
-| `--hostname` | Select host for this invocation |
-| `-o, --output` | Output format: `table\|json\|yaml\|raw` |
-| `--insecure` | Skip TLS certificate verification |
-| `--debug` | Print HTTP request/response to stderr |
+| `--hostname` | Select host for this invocation. |
+| `-o, --output` | Output format: `table`, `json`, `yaml`, or `raw`. |
+| `--insecure` | Skip TLS certificate verification. |
+| `--debug` | Print HTTP request/response details to stderr. |
 
-### Command discovery
+### Environment
 
-Generated CLIs expose their command tree as structured data:
+| Env var | Effect |
+|---|---|
+| `$<NAME>_HOST` | Select host without editing the host config. |
+| `$<NAME>_CONFIG_DIR` | Override the config directory, defaulting to `~/.config/<name>`. |
+| `LATHE_SPECS_CACHE` | Where spec sync stages upstream specs, defaulting to `.cache`. |
 
-```sh
-acmectl commands --json
-acmectl commands schema --json
-acmectl commands show iam users create-user --json
-acmectl search "create user" --json
-```
+`<NAME>` is the uppercased `cli.name`.
 
-Use `commands --json` as the source of truth for generated command paths,
-flags, HTTP methods, request paths, body requirements, auth scopes, and output
-hints. Use `search --json` only to find candidates, then use
-`commands show <path...> --json` before executing an unfamiliar command.
+### Request Bodies
 
----
+Generated commands expose request body helpers when the API operation accepts a
+body:
 
-## Design principles
+| Flag | Use |
+|---|---|
+| `--file path.json` | Load the request body from a JSON file. |
+| `--set key.path=value` | Build JSON from repeated key/value assignments. |
+| `--set-str key.path=value` | Build JSON while forcing the value to remain a string. |
 
-1. **Spec is truth. Code is derived.** Before hand-writing a command, ask why the spec doesn't already say it.
-2. **Mechanical first, overlay second.** Layer 1 is a verbatim mapping; polish only where reality beats the spec.
-3. **No hidden state.** Hosts keyed by hostname. No ambient "current context", no implicit default.
-4. **Multi-backend, one IR.** The runtime does not know whether a command came from Swagger, OpenAPI 3, or proto.
+## Architecture
 
----
+Lathe has two phases:
+
+1. `cmd/specsync` clones pinned upstream specs, verifies the resolved commit
+   SHA, and writes local spec state.
+2. `cmd/codegen` normalizes specs into one intermediate representation, applies
+   overlays, renders Go command modules, and renders the Skill directory.
+
+The generated CLI uses `pkg/lathe` and `pkg/runtime` for the shared command
+catalog, auth, request construction, output formatting, pagination, streaming,
+and stable error handling.
+
+## Design Principles
+
+1. **Spec is truth.** Generated command behavior should come from the API spec.
+2. **Catalog is contract.** Humans can read help text; agents need structured command facts.
+3. **Search is not execution.** Search finds candidates; `commands show` confirms exact command shape.
+4. **Auth is explicit.** Credentials are keyed by hostname, and agents should preflight auth before protected calls.
+5. **Overlay after generation.** Polish weak spec text without forking generated code.
+6. **One binary at runtime.** The generated CLI should be easy to install, inspect, and automate.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). All commits must be signed off (`git commit -s`) per [DCO](https://developercertificate.org/).
+See [CONTRIBUTING.md](CONTRIBUTING.md). All commits must be signed off with
+`git commit -s` per the [Developer Certificate of Origin](https://developercertificate.org/).
 
 ## Security
 
@@ -209,4 +304,4 @@ See [SECURITY.md](SECURITY.md) for private vulnerability disclosure.
 
 ## License
 
-[MIT](LICENSE) © samzong
+[MIT](LICENSE) (c) samzong
