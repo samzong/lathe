@@ -8,3 +8,4 @@
 /.cache/
 /internal/generated/
 examples/*/bin/
+examples/*/skills/

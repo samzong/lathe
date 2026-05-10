@@ -396,6 +396,12 @@ DEST="$LATHE_ROOT/examples/richapi/bin"
 mkdir -p "$DEST"
 cp bin/richapi "$DEST/richapi"
 
+SKILL_DEST="$LATHE_ROOT/examples/richapi/skills"
+rm -rf "$SKILL_DEST/richapi"
+mkdir -p "$SKILL_DEST"
+cp -R skills/richapi "$SKILL_DEST/richapi"
+
 echo "=========================================="
 echo "  Done. Binary saved to examples/richapi/bin/richapi"
+echo "  Done. Skill saved to examples/richapi/skills/richapi"
 echo "=========================================="

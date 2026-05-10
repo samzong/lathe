@@ -156,6 +156,11 @@ DEST="$LATHE_ROOT/examples/petstore/bin"
 mkdir -p "$DEST"
 cp bin/petstore "$DEST/petstore"
 
+SKILL_DEST="$LATHE_ROOT/examples/petstore/skills"
+rm -rf "$SKILL_DEST/petstore"
+mkdir -p "$SKILL_DEST"
+cp -R skills/petstore "$SKILL_DEST/petstore"
+
 # Demo
 echo ""
 echo "========== petstore --help =========="
@@ -165,3 +170,4 @@ echo "========== petstore pets --help =========="
 ./bin/petstore pets --help
 echo ""
 echo "Done. Binary saved to examples/petstore/bin/petstore"
+echo "Done. Skill saved to examples/petstore/skills/petstore"
