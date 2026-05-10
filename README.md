@@ -125,6 +125,11 @@ go build -o bin/acmectl ./cmd/acmectl
 
 Re-run `make bootstrap` whenever you bump a `pinned_tag`.
 
+Codegen also emits `skills/<cli-name>/`, a standard Skill directory agents can
+load as a quick guide to the generated CLI. The Skill explains discovery,
+auth preflight, and module references; the runtime catalog remains the source
+of truth for exact command flags and request shapes.
+
 ---
 
 ## Sources reference
@@ -173,6 +178,7 @@ Generated CLIs expose their command tree as structured data:
 
 ```sh
 acmectl commands --json
+acmectl commands schema --json
 acmectl commands show iam users create-user --json
 acmectl search "create user" --json
 ```

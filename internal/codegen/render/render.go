@@ -34,6 +34,11 @@ const RuntimePkg = "github.com/samzong/lathe/pkg/runtime"
 // the corresponding CommandSpec (Aliases are appended, not replaced). Passing
 // a nil map means "no overlay", equivalent to the pre-overlay behavior.
 func RenderModule(name string, specs []runtime.CommandSpec, overrides map[string]overlay.Override) error {
+	merged := MergeOverlay(specs, overrides)
+	return renderModuleSpecs(name, merged)
+}
+
+func MergeOverlay(specs []runtime.CommandSpec, overrides map[string]overlay.Override) []runtime.CommandSpec {
 	var merged []runtime.CommandSpec
 	for _, s := range specs {
 		o, ok := overrides[s.Use]
@@ -85,12 +90,16 @@ func RenderModule(name string, specs []runtime.CommandSpec, overrides map[string
 		}
 		merged = append(merged, cs)
 	}
+	return merged
+}
+
+func renderModuleSpecs(name string, specs []runtime.CommandSpec) error {
 	var buf strings.Builder
 	ctx := moduleCtx{
 		Module:        name,
 		RuntimePkg:    RuntimePkg,
 		SchemaVersion: runtime.SchemaVersion,
-		Ops:           merged,
+		Ops:           specs,
 	}
 	if err := moduleTmpl.Execute(&buf, ctx); err != nil {
 		return err

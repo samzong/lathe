@@ -297,6 +297,7 @@ EOF
 
 echo "==> Running codegen..."
 "$CODEGEN" -sources specs/sources.yaml -cache .cache
+test -f skills/richapi/SKILL.md
 
 echo "==> Inspecting generated code..."
 echo "--- generated specs file ---"

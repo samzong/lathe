@@ -108,6 +108,7 @@ EOF
 # Run codegen
 echo "==> Running codegen..."
 "$CODEGEN" -sources specs/sources.yaml -cache .cache
+test -f skills/petstore/SKILL.md
 
 # main.go
 mkdir -p cmd/petstore
