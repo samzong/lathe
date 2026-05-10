@@ -53,7 +53,7 @@ built, and which output format to prefer.
 | Agentic-friendly discovery | `search`, `commands --json`, `commands show`, and `commands schema` expose the CLI as structured data. |
 | Generated Skills | Codegen writes `skills/<cli-name>/` so agents can load the CLI's operating guide and module references. |
 | Reproducible inputs | Specs are pinned by tag, resolved to commit SHA, and regenerated from checked-in configuration. |
-| Real CLI UX | Hostname-keyed auth, `--file`, `--set`, `--set-str`, `-o table|json|yaml|raw`, enum validation, pagination, streaming, and `--debug`. |
+| Real CLI UX | Hostname-keyed auth, --file, --set, --set-str, -o table\|json\|yaml\|raw, enum validation, pagination, streaming, and --debug. |
 | Overlay polish | Improve summaries, aliases, parameter help, grouping, and examples without editing generated code. |
 
 ## Quick Start
