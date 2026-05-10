@@ -15,13 +15,14 @@ import (
 // segregate modules from core commands (e.g. auth) and from completion/help.
 const ModuleGroupID = "modules"
 
-func AssertSchema(generated int) {
+func AssertSchema(generated int) error {
 	if generated != SchemaVersion {
-		panic(fmt.Sprintf(
+		return fmt.Errorf(
 			"lathe schema mismatch: generated code uses schema %d but runtime expects %d — re-run codegen",
 			generated, SchemaVersion,
-		))
+		)
 	}
+	return nil
 }
 
 // Build mounts a service command tree under root, driven entirely by specs.
@@ -49,6 +50,7 @@ func buildCmd(s CommandSpec) *cobra.Command {
 	vals := make(map[string]any, len(s.Params))
 	var bodyFile string
 	var bodySets []string
+	var bodyStringSets []string
 	var paginateAll bool
 	var maxPages int
 	var waitPoll bool
@@ -145,8 +147,8 @@ func buildCmd(s CommandSpec) *cobra.Command {
 				body = form
 			} else if s.RequestBody != nil {
 				switch {
-				case cmd.Flags().Changed("set"):
-					raw, berr := BuildBodyFromSet(bodySets)
+				case cmd.Flags().Changed("set") || cmd.Flags().Changed("set-str"):
+					raw, berr := buildBodyFromSet(bodySets, bodyStringSets)
 					if berr != nil {
 						return berr
 					}
@@ -158,7 +160,7 @@ func buildCmd(s CommandSpec) *cobra.Command {
 					}
 					body = raw
 				case s.RequestBody.Required:
-					return fmt.Errorf("request body required: pass --file or --set")
+					return fmt.Errorf("request body required: pass --file, --set, or --set-str")
 				}
 			}
 
@@ -248,13 +250,17 @@ func buildCmd(s CommandSpec) *cobra.Command {
 	}
 	if s.RequestBody != nil {
 		fileHelp := "path to JSON body file, or '-' for stdin"
-		setHelp := "set body field, e.g. --set spec.replicas=3 (repeatable; nested via dots)"
+		setHelp := "set body field with type inference, e.g. --set spec.replicas=3 (repeatable; nested via dots)"
+		setStrHelp := "set body field as string, e.g. --set-str spec.replicas=3 (repeatable; nested via dots)"
 		if s.RequestBody.Required {
-			fileHelp += " (use --file or --set)"
-			setHelp += " (use --file or --set)"
+			suffix := " (use --file, --set, or --set-str)"
+			fileHelp += suffix
+			setHelp += suffix
+			setStrHelp += suffix
 		}
 		cmd.Flags().StringVarP(&bodyFile, "file", "f", "", fileHelp)
-		cmd.Flags().StringSliceVar(&bodySets, "set", nil, setHelp)
+		cmd.Flags().StringArrayVar(&bodySets, "set", nil, setHelp)
+		cmd.Flags().StringArrayVar(&bodyStringSets, "set-str", nil, setStrHelp)
 	}
 	if s.Output.Pagination != nil {
 		cmd.Flags().BoolVar(&paginateAll, "all", false, "fetch all pages")

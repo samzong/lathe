@@ -1,6 +1,11 @@
 package runtime
 
 import (
+	"encoding/json"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -73,21 +78,19 @@ func TestBuild_PopulatesGroupAndOpTree(t *testing.T) {
 }
 
 func TestAssertSchema_Match(t *testing.T) {
-	AssertSchema(SchemaVersion)
+	if err := AssertSchema(SchemaVersion); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 }
 
 func TestAssertSchema_Mismatch(t *testing.T) {
-	defer func() {
-		r := recover()
-		if r == nil {
-			t.Fatal("expected panic on schema mismatch")
-		}
-		msg, ok := r.(string)
-		if !ok || !strings.Contains(msg, "re-run codegen") {
-			t.Errorf("unexpected panic value: %v", r)
-		}
-	}()
-	AssertSchema(SchemaVersion + 999)
+	err := AssertSchema(SchemaVersion + 999)
+	if err == nil {
+		t.Fatal("expected error on schema mismatch")
+	}
+	if !strings.Contains(err.Error(), "re-run codegen") {
+		t.Errorf("unexpected error: %v", err)
+	}
 }
 
 func TestBuild_EmptySpecsMountsEmptyService(t *testing.T) {
@@ -116,10 +119,71 @@ func TestBuild_BodyFlagsAttachedWhenHasBody(t *testing.T) {
 	users := mustFindChild(t, svc, "users")
 	createUser := mustFindChild(t, users, "create-user")
 
-	for _, name := range []string{"file", "set"} {
+	for _, name := range []string{"file", "set", "set-str"} {
 		if createUser.Flag(name) == nil {
 			t.Errorf("create-user missing --%s flag", name)
 		}
+	}
+}
+
+func TestBuild_SetStrSendsStringBodyFields(t *testing.T) {
+	bindTestManifest(t, "myctl", "MYCTL_HOST")
+	t.Setenv("MYCTL_CONFIG_DIR", t.TempDir())
+
+	var rawBody []byte
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var err error
+		rawBody, err = io.ReadAll(r.Body)
+		if err != nil {
+			t.Errorf("read request body: %v", err)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{}`))
+	}))
+	defer srv.Close()
+
+	specs := []CommandSpec{{
+		Group:       "Users",
+		Use:         "create-user",
+		Method:      "POST",
+		PathTpl:     "/users",
+		RequestBody: &RequestBody{Required: true},
+		Security:    &SecurityHint{Public: true},
+	}}
+
+	root := newRootWithModuleGroup()
+	root.PersistentFlags().String("hostname", "", "")
+	root.PersistentFlags().StringP("output", "o", "raw", "")
+	Build(root, "demo", specs)
+	root.SetArgs([]string{
+		"--hostname", srv.URL,
+		"demo", "users", "create-user",
+		"--set", "spec.replicas=3",
+		"--set", "spec.enabled=true",
+		"--set-str", "spec.stringReplicas=3",
+		"--set-str", "spec.stringEnabled=true",
+		"--set-str", "spec.csv=a,b",
+	})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+
+	var got map[string]any
+	if err := json.Unmarshal(rawBody, &got); err != nil {
+		t.Fatalf("invalid request JSON %q: %v", string(rawBody), err)
+	}
+	want := map[string]any{
+		"spec": map[string]any{
+			"replicas":       float64(3),
+			"enabled":        true,
+			"stringReplicas": "3",
+			"stringEnabled":  "true",
+			"csv":            "a,b",
+		},
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("got %#v, want %#v", got, want)
 	}
 }
 

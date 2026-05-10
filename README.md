@@ -34,7 +34,7 @@ lathe handles everything else.
 - **Three native backends** — Swagger 2.0, OpenAPI 3, and `.proto` (with `google.api.http`). Each consumed in its real form; no cross-transcoding.
 - **Reproducible** — every spec pinned at an immutable tag; floating branches rejected. Commit SHA recorded and verified.
 - **Hostname-keyed auth** — per-host credentials modeled on `gh`. Public endpoints skip auth; scoped endpoints show required OAuth scopes.
-- **Rich CLI** — body builder (`--file`, `--set`), `-o table|json|yaml|raw`, enum validation, cursor-based pagination (`--all`), SSE streaming, parameter defaults and deprecation warnings.
+- **Rich CLI** — body builder (`--file`, `--set`, `--set-str`), `-o table|json|yaml|raw`, enum validation, cursor-based pagination (`--all`), SSE streaming, parameter defaults and deprecation warnings.
 - **Overlay layer** — polish help text, aliases, and examples per-module without editing generated code.
 - **Extensible** — `Authenticator` and `Formatter` interfaces for custom auth schemes and output formats.
 - **Production-ready** — typed error model with stable exit codes (0–4), `--debug` HTTP tracing, schema version contract between generated code and runtime.

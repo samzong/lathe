@@ -147,9 +147,12 @@ import (
 
 const generatedSchemaVersion = {{.SchemaVersion}}
 
-func Mount(root *cobra.Command) {
-	runtime.AssertSchema(generatedSchemaVersion)
+func Mount(root *cobra.Command) error {
+	if err := runtime.AssertSchema(generatedSchemaVersion); err != nil {
+		return err
+	}
 	runtime.Build(root, {{printf "%q" .Module}}, Specs)
+	return nil
 }
 
 var Specs = []runtime.CommandSpec{
@@ -240,10 +243,13 @@ import (
 // The import list above is the single source of truth for which modules
 // are compiled into this binary. main.go wires this call after
 // app.NewApp() so the framework package never imports downstream code.
-func MountModules(root *cobra.Command) {
+func MountModules(root *cobra.Command) error {
 {{- range .Modules}}
-	{{.}}.Mount(root)
+	if err := {{.}}.Mount(root); err != nil {
+		return err
+	}
 {{- end}}
+	return nil
 }
 `))
 

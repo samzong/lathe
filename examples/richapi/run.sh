@@ -309,6 +309,7 @@ package main
 
 import (
 	_ "embed"
+	"fmt"
 	"os"
 
 	"github.com/samzong/lathe/pkg/config"
@@ -328,7 +329,10 @@ func main() {
 	}
 	config.Bind(m)
 	root := lathe.NewApp(m)
-	generated.MountModules(root)
+	if err := generated.MountModules(root); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 	os.Exit(runtime.Execute(root))
 }
 GOEOF

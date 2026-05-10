@@ -242,7 +242,7 @@ sequenceDiagram
         Host-->>Runner: selected host + credentials
     end
 
-    Runner->>Body: assemble body (--file, --set dotted.paths)
+    Runner->>Body: assemble body (--file, --set dotted.paths, --set-str dotted.paths)
     Body-->>Runner: JSON payload
 
     Runner->>HTTP: method + PathTpl(params) + body + auth header

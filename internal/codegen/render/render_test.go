@@ -45,7 +45,9 @@ func TestRenderModule_AppliesOverlay(t *testing.T) {
 		`"addon-install"`,
 		`"untouched short"`,
 		`generatedSchemaVersion`,
-		`runtime.AssertSchema`,
+		`func Mount(root *cobra.Command) error`,
+		`if err := runtime.AssertSchema(generatedSchemaVersion); err != nil`,
+		`return err`,
 	} {
 		if !strings.Contains(got, want) {
 			t.Errorf("output missing %q", want)
@@ -175,5 +177,35 @@ func TestRenderModule_NilOverrides(t *testing.T) {
 	}
 	if !strings.Contains(string(out), `"raw short"`) {
 		t.Errorf("expected raw short preserved when overrides is nil")
+	}
+}
+
+func TestRenderModulesGen_PropagatesMountErrors(t *testing.T) {
+	t.Chdir(t.TempDir())
+	if err := os.WriteFile("go.mod", []byte("module example.com/fake\n\ngo 1.25\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll("internal/generated", 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := RenderModulesGen([]string{"alpha", "beta"}); err != nil {
+		t.Fatalf("RenderModulesGen: %v", err)
+	}
+	out, err := os.ReadFile("internal/generated/modules_gen.go")
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := string(out)
+	for _, want := range []string{
+		`func MountModules(root *cobra.Command) error`,
+		`if err := alpha.Mount(root); err != nil`,
+		`if err := beta.Mount(root); err != nil`,
+		`return err`,
+		`return nil`,
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("output missing %q", want)
+		}
 	}
 }
