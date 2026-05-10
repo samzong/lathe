@@ -2,50 +2,66 @@
 
 # lathe
 
-> 把任意 API 规格文件变成一个开箱即用的 CLI。
+> 把任意 API 规格生成对人和 Agent 都好用的单文件 CLI。
 
 [![CI](https://github.com/samzong/lathe/actions/workflows/ci.yml/badge.svg)](https://github.com/samzong/lathe/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-给 lathe 喂一份 Swagger 2.0、OpenAPI 3 或带 `google.api.http` 注解的 `.proto` 文件，它就能生成一个完整的 `cobra` 二进制：按操作拆分子命令、按主机名管理认证、用 flag 构造请求体、支持 table / JSON / YAML 输出——不用手写任何命令代码。
+Lathe 可以把 Swagger 2.0、OpenAPI 3，以及带 `google.api.http` 注解的
+protobuf API 生成生产级 CLI。生成出来的二进制首先要让人用得顺手，
+同时也要让 Agent 能稳定理解：命令可以发现，参数可以检查，认证状态可以预检，
+执行结果也可以用机器可读格式拿到。
+
+```sh
+acmectl search "create user" --json
+acmectl commands show iam users create-user --json
+acmectl auth status --hostname api.acme.com
+acmectl iam users create-user --set email=alice@example.com -o json
+```
+
+生成的 CLI 自带 command catalog JSON、意图搜索、单命令详情 JSON、认证元数据、
+请求体构造器、结构化输出，以及仓库内的 Skill 目录 `skills/<cli-name>/`。
 
 ![lathe 架构图](docs/images/architecture.png)
 
 ---
 
-## 为什么做
+## 为什么需要 Lathe
 
-每个有公开 API 的服务最终都会需要一个 CLI。团队反复花几周时间把现有的 Swagger 或 protobuf 规格 1:1 翻写成命令——这种重复劳动在规格一更新就悄悄腐烂。
+只要一个 API 被团队认真使用，在 LLM 时代就会想要 CLI。常见做法是照着
+Swagger、OpenAPI 或 protobuf 手写一棵命令树，然后长期维护一份和 API 规格
+高度重复、随时可能漂移的代码。
 
-如果规格就是事实来源，CLI 就应该从它派生，而不是靠人工抄写。
+Lathe 的判断很简单：API 规格才是事实来源，CLI 应该从规格生成，而不是靠人工
+翻写。
 
-lathe 把规格当输入，把 CLI 当输出。你只需要：
+你只需要锁定上游规格、声明 CLI 名称和认证行为，再用 overlay 补强少量不够
+清楚的帮助文案。API 变更时，升级锁定的 tag，重新生成即可。
 
-- 把上游规格锁定在一个 tag，
-- 声明几个身份字段（CLI 名称、认证端点），
-- 可选地用 overlay 润色规格描述不够好的地方。
+最终得到的不是一个薄包装，而是一套 Agent 友好的 CLI 表面。runtime catalog
+会告诉 Agent 有哪些命令、哪些 flag 必填、是否需要认证、会发起什么 HTTP
+请求、请求体如何构造，以及应该优先使用哪种输出格式。
 
-剩下的交给 lathe。
+## 你会得到什么
 
----
-
-## 特性
-
-- **三种原生后端** — Swagger 2.0、OpenAPI 3 和 `.proto`（带 `google.api.http`）。每种规格以原始格式消费，无需交叉转码。
-- **可复现** — 每个上游规格锁定在不可变 tag；浮动分支会被拒绝。Commit SHA 会记录并校验。
-- **按主机名认证** — 借鉴 `gh` 的模型，按主机存储凭据。公开端点自动跳过认证；需要授权的端点会显示所需的 OAuth scope。
-- **功能丰富的 CLI** — body builder（`--file`、`--set`）、`-o table|json|yaml|raw`、枚举校验、基于游标的分页（`--all`）、SSE 流式传输、参数默认值和废弃警告。
-- **Overlay 层** — 按模块润色帮助文本、别名和示例，无需修改生成代码。
-- **可扩展** — `Authenticator` 和 `Formatter` 接口，支持自定义认证方案和输出格式。
-- **生产就绪** — 带稳定退出码（0–4）的类型化错误模型、`--debug` HTTP 追踪、生成代码与运行时之间的 schema 版本契约。
-
----
+| 能力 | 说明 |
+|---|---|
+| 多后端生成 | Swagger 2.0、OpenAPI 3，以及带 `google.api.http` 注解的 protobuf service 都可以生成 Cobra 命令树。 |
+| 统一运行时 | 生成模块共享同一套认证、请求构造、输出格式化、分页、流式响应和错误处理逻辑。 |
+| Agent 友好的发现能力 | `search`、`commands --json`、`commands show` 和 `commands schema` 会把 CLI 能力暴露成结构化数据。 |
+| 生成 Skill | Codegen 会写入 `skills/<cli-name>/`，让 Agent 能快速读取 CLI 的使用指南和模块 reference。 |
+| 可复现输入 | API 规格按 tag 锁定，解析到 commit SHA，并从仓库内配置重新生成。 |
+| 真实 CLI 体验 | 按 hostname 管理认证，支持 `--file`、`--set`、`--set-str`、`-o table|json|yaml|raw`、枚举校验、分页、流式响应和 `--debug`。 |
+| Overlay 润色 | 不改生成代码，也能补充摘要、别名、参数帮助、分组和示例。 |
 
 ## 快速开始
 
-在 [github.com/samzong/lathe](https://github.com/samzong/lathe) 点击 **"Use this template"**，然后填写两个文件，运行 `make`。
+基于 [github.com/samzong/lathe](https://github.com/samzong/lathe) 创建仓库，
+然后配置两个文件。
 
-### `cli.yaml` — CLI 身份
+### 1. 定义 CLI
+
+`cli.yaml`:
 
 ```yaml
 cli:
@@ -61,7 +77,9 @@ auth:
       fallback_field: data.email
 ```
 
-### `specs/sources.yaml` — 锁定上游规格
+### 2. 锁定 API 来源
+
+`specs/sources.yaml`:
 
 ```yaml
 sources:
@@ -93,94 +111,186 @@ sources:
         - api/openapi.yaml
 ```
 
-### `internal/overlay/<module>.yaml` — 润色帮助文本（可选）
+### 3. 生成并构建
+
+```sh
+make bootstrap
+go build -o bin/acmectl ./cmd/acmectl
+```
+
+`make bootstrap` 会同步锁定的规格并运行 codegen。Codegen 会生成 Go 模块，
+并默认生成 Skill 目录 `skills/acmectl/`。
+
+### 4. 使用 CLI
+
+```sh
+./bin/acmectl auth login --hostname api.acme.com
+./bin/acmectl iam users create-user \
+  --set email=alice@example.com \
+  --set role=viewer \
+  -o json
+```
+
+## Agent 友好的 CLI 能力
+
+生成的 CLI 不要求 Agent 猜命令、猜参数、猜认证状态。
+
+| 命令 | 用途 |
+|---|---|
+| `<cli> search "<intent>" --json` | 根据意图查找候选命令。支持 `--limit`。Search 只用于发现候选项。 |
+| `<cli> commands --json` | 读取完整的 generated command catalog。需要隐藏命令时使用 `--include-hidden`。 |
+| `<cli> commands show <path...> --json` | 执行前检查单个命令的事实来源，包括 flags、body、auth、HTTP method/path 和 output hints。 |
+| `<cli> commands schema --json` | 在做长期机器解析前确认 catalog schema version。 |
+| `<cli> auth status --hostname <host>` | 当命令详情显示 `auth.required=true` 时，先确认该 host 的登录状态。 |
+
+推荐的 Agent 执行流程：
+
+1. 用 `search "<intent>" --json` 找候选命令。
+2. 用 `commands show <path...> --json` 检查目标命令。
+3. 如果 `auth.required=true`，先运行 `auth status --hostname <host>`；未登录就停止并让用户认证。
+4. 确认 flags、body requirements、auth、HTTP path 和 output hints 后再执行。
+5. 除非用户明确要表格输出，否则优先使用 `-o json`。
+
+## 生成的 Skill 目录
+
+Codegen 默认写入标准 Skill 目录：
+
+```text
+skills/<cli-name>/
+|-- SKILL.md
+|-- agents/openai.yaml
+`-- references/
+    |-- catalog.md
+    `-- modules/<source-name>.md
+```
+
+Skill 是给 Agent 的精简操作指南，说明如何发现命令、读取 catalog、做 auth
+preflight、构造 body、选择输出格式，以及如何查看按 source 拆分的模块
+reference。
+
+runtime catalog 仍然是事实来源。Agent 应该先通过 Skill 理解 CLI 的使用方式，
+再用 `commands show <path...> --json` 获取精确执行细节。
+
+如果不需要生成 Skill，可以关闭：
+
+```sh
+go run ./cmd/codegen -skill-root ""
+```
+
+## 配置
+
+### `cli.yaml`
+
+定义 CLI 身份和可选的认证校验行为。
+
+| 字段 | 说明 |
+|---|---|
+| `cli.name` | 二进制和命令名称，例如 `acmectl`。 |
+| `cli.short` | 根命令摘要。 |
+| `auth.validate` | 可选端点，供 `auth status` 展示已登录用户。 |
+
+### `specs/sources.yaml`
+
+声明哪些上游规格会变成 CLI 模块。
+
+| 字段 | 必填 | 说明 |
+|---|---|---|
+| `repo_url` | 是 | `git clone` 能接受的任意 URL。 |
+| `pinned_tag` | 是 | 不接受浮动分支；可复现性是硬要求。 |
+| `backend` | 是 | `swagger`、`openapi3` 或 `proto` 之一。 |
+| `swagger.files` | 仅 Swagger | 一个或多个 Swagger 2.0 JSON 规格。 |
+| `openapi3.files` | 仅 OpenAPI 3 | JSON 或 YAML OpenAPI 规格。 |
+| `proto.staging` | 仅 Proto | 解析前暂存到 `protoc` include root 的文件。 |
+| `proto.entries` | 仅 Proto | 入口 proto 文件；只有带 `google.api.http` 的 RPC 会变成命令。 |
+
+分组规则：
+
+- Swagger 和 OpenAPI 3 使用 operation 的第一个 tag。
+- Proto 使用 service 名称。
+
+### Overlays
+
+Overlay 用来润色生成命令，不需要修改上游规格，也不需要编辑生成的 Go 代码。
+
+`internal/overlay/iam.yaml`:
 
 ```yaml
-# internal/overlay/iam.yaml
 commands:
   create-user:
     short: "Create a user in the IAM service"
     aliases: [adduser]
     example: |
       acmectl iam create-user \
-        --email alice@example.com \
-        --role viewer
+        --set email=alice@example.com \
+        --set role=viewer
     params:
       role:
         help: "User role (viewer, editor, admin)"
         default: viewer
 ```
 
-Overlay 在代码生成阶段烘焙进生成代码——运行时完全不感知它的存在。给 codegen 传 `-overlay internal/overlay` 即可。
-
-### 构建
+使用 overlay 目录运行 codegen：
 
 ```sh
-make bootstrap          # sync-specs + gen
-go build -o bin/acmectl ./cmd/acmectl
-
-./bin/acmectl auth login --hostname acme.example.com
-./bin/acmectl iam create-user --email alice@example.com --role viewer
+go run ./cmd/codegen -overlay internal/overlay
 ```
 
-每次升级 `pinned_tag` 后重新运行 `make bootstrap`。
+## 运行时能力
 
----
-
-## Sources 参考
-
-`specs/sources.yaml` 声明哪些上游规格会成为 CLI 中的模块。
-
-| 字段 | 必填 | 说明 |
-|---|---|---|
-| `repo_url` | ✓ | `git clone` 能接受的任意 URL |
-| `pinned_tag` | ✓ | 不接受浮动分支——可复现性是硬性要求 |
-| `backend` | ✓ | `swagger`、`openapi3` 或 `proto`（互斥） |
-| `swagger.files` | 仅 swagger | 多文件合并；重复时警告，先到先得 |
-| `openapi3.files` | 仅 openapi3 | JSON 或 YAML；多文件合并；`$ref` 在文件内解析 |
-| `proto.staging` | 仅 proto | 将文件暂存到 protoc 的 include 根目录 |
-| `proto.entries` | 仅 proto | 只有带 `google.api.http` 的 RPC 才会变成命令 |
-
-子命令树分组规则：
-
-- **Swagger / OpenAPI 3** — 使用操作的第一个 `tag`。
-- **Proto** — 使用 `service` 名称。
-
----
-
-## 配置
-
-| 环境变量 | 效果 |
-|---|---|
-| `$<NAME>_HOST` | 不编辑 `hosts.yml` 直接选择主机 |
-| `$<NAME>_CONFIG_DIR` | 覆盖配置目录（默认 `~/.config/<name>`） |
-| `LATHE_SPECS_CACHE` | `make sync-specs` 暂存规格的位置（默认 `.cache`） |
-
-`<NAME>` 是 `cli.name` 的大写形式。
-
-### 全局 flag
+### 全局 Flags
 
 | Flag | 效果 |
 |---|---|
-| `--hostname` | 为本次调用选择主机 |
-| `-o, --output` | 输出格式：`table\|json\|yaml\|raw` |
-| `--insecure` | 跳过 TLS 证书验证 |
-| `--debug` | 将 HTTP 请求/响应打印到 stderr |
+| `--hostname` | 为本次调用选择 host。 |
+| `-o, --output` | 输出格式：`table`、`json`、`yaml` 或 `raw`。 |
+| `--insecure` | 跳过 TLS 证书验证。 |
+| `--debug` | 将 HTTP 请求/响应详情打印到 stderr。 |
 
----
+### 环境变量
+
+| 环境变量 | 效果 |
+|---|---|
+| `$<NAME>_HOST` | 不修改 host 配置也能选择 host。 |
+| `$<NAME>_CONFIG_DIR` | 覆盖配置目录，默认是 `~/.config/<name>`。 |
+| `LATHE_SPECS_CACHE` | spec sync 暂存上游规格的位置，默认是 `.cache`。 |
+
+`<NAME>` 是 `cli.name` 的大写形式。
+
+### 请求体
+
+当 API operation 接受 body 时，生成命令会暴露请求体辅助 flag：
+
+| Flag | 用途 |
+|---|---|
+| `--file path.json` | 从 JSON 文件加载请求体。 |
+| `--set key.path=value` | 通过重复的 key/value 赋值构造 JSON。 |
+| `--set-str key.path=value` | 构造 JSON，并强制该值保持字符串类型。 |
+
+## 架构
+
+Lathe 分两步工作：
+
+1. `cmd/specsync` clone 锁定的上游规格，校验解析到的 commit SHA，并写入本地
+   spec state。
+2. `cmd/codegen` 将规格标准化为统一的中间表示，应用 overlays，渲染 Go 命令模块，
+   并渲染 Skill 目录。
+
+生成的 CLI 使用 `pkg/lathe` 和 `pkg/runtime` 提供共享 command catalog、认证、
+请求构造、输出格式化、分页、流式响应和稳定错误处理。
 
 ## 设计原则
 
-1. **规格即真相，代码即派生。** 在手写命令之前，先问为什么规格里没有。
-2. **机械映射优先，overlay 其次。** 第一层是逐字映射；只在现实超越规格时才润色。
-3. **无隐藏状态。** 主机按主机名索引。没有隐式的"当前上下文"，没有默认选中。
-4. **多后端，一个 IR。** 运行时不知道一个命令来自 Swagger、OpenAPI 3 还是 proto。
-
----
+1. **Spec is truth.** 生成命令的行为应该来自 API 规格。
+2. **Catalog is contract.** 人可以读 help text，Agent 需要结构化命令事实。
+3. **Search is not execution.** Search 只找候选项，`commands show` 才确认精确命令形态。
+4. **Auth is explicit.** 凭据按 hostname 记录，Agent 执行受保护调用前应先检查 auth。
+5. **Overlay after generation.** 补强薄弱的规格文案，但不 fork 生成代码。
+6. **One binary at runtime.** 生成的 CLI 应该易于安装、检查和自动化。
 
 ## 参与贡献
 
-参见 [CONTRIBUTING.md](CONTRIBUTING.md)。所有 commit 必须签署（`git commit -s`），遵循 [DCO](https://developercertificate.org/)。
+参见 [CONTRIBUTING.md](CONTRIBUTING.md)。所有 commit 必须使用 `git commit -s`
+签署，遵循 [Developer Certificate of Origin](https://developercertificate.org/)。
 
 ## 安全
 
@@ -188,4 +298,4 @@ go build -o bin/acmectl ./cmd/acmectl
 
 ## 许可证
 
-[MIT](LICENSE) © samzong
+[MIT](LICENSE) (c) samzong
