@@ -231,7 +231,23 @@ func renderModuleReference(manifest *config.Manifest, mod SkillModule) string {
 			fmt.Fprintf(&b, "- HTTP: `%s %s`\n", spec.Method, spec.PathTpl)
 			fmt.Fprintf(&b, "- Auth: %s\n", authSummary(spec.Security))
 			fmt.Fprintf(&b, "- Body: %s\n", bodySummary(spec.RequestBody))
-			fmt.Fprintf(&b, "- Flags: %d declared; inspect with `%s commands show %s --json`.\n", len(spec.Params), cli, strings.Join(path[1:], " "))
+			if len(spec.Params) == 0 {
+				b.WriteString("- Flags: none\n")
+			} else {
+				b.WriteString("- Flags:\n")
+				for _, p := range spec.Params {
+					req := ""
+					if p.Required {
+						req = ", required"
+					}
+					def := ""
+					if p.Default != "" {
+						def = fmt.Sprintf(", default `%s`", p.Default)
+					}
+					fmt.Fprintf(&b, "  - `--%s` (%s%s%s): %s\n", p.Flag, p.In, req, def, oneLine(stripHelpMeta(p.Help)))
+				}
+
+			}
 			if out := outputSummary(spec.Output); out != "" {
 				fmt.Fprintf(&b, "- Output: %s\n", out)
 			}
@@ -365,6 +381,15 @@ func outputSummary(out runtime.OutputHints) string {
 
 func oneLine(s string) string {
 	return strings.Join(strings.Fields(s), " ")
+}
+
+// stripHelpMeta removes the trailing " (...)" annotation that helpText() appends,
+// so callers that render the metadata separately don't produce duplicates.
+func stripHelpMeta(s string) string {
+	if i := strings.LastIndex(s, " ("); i >= 0 && strings.HasSuffix(s, ")") {
+		return s[:i]
+	}
+	return s
 }
 
 func valueOrUnknown(s string) string {
