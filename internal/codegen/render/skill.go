@@ -244,7 +244,19 @@ func renderModuleReference(manifest *config.Manifest, mod SkillModule) string {
 					if p.Default != "" {
 						def = fmt.Sprintf(", default `%s`", p.Default)
 					}
-					fmt.Fprintf(&b, "  - `--%s` (%s%s%s): %s\n", p.Flag, p.In, req, def, oneLine(stripHelpMeta(p.Help)))
+					format := ""
+					if p.Format != "" {
+						format = ", " + p.Format
+					}
+					enum := ""
+					if len(p.Enum) > 0 {
+						enum = ", one of: " + strings.Join(p.Enum, "|")
+					}
+					deprecated := ""
+					if p.Deprecated {
+						deprecated = ", deprecated"
+					}
+					fmt.Fprintf(&b, "  - `--%s` (%s%s%s%s%s%s): %s\n", p.Flag, p.In, req, def, format, enum, deprecated, oneLine(stripHelpMeta(p.Help)))
 				}
 
 			}
