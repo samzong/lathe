@@ -33,7 +33,7 @@ func buildBodyFromSet(sets []string, stringSets []string) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		if err := setNested(out, strings.Split(path, "."), inferValue(value)); err != nil {
+		if err := setNestedPath(out, path, inferValue(value)); err != nil {
 			return nil, err
 		}
 	}
@@ -42,7 +42,7 @@ func buildBodyFromSet(sets []string, stringSets []string) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		if err := setNested(out, strings.Split(path, "."), value); err != nil {
+		if err := setNestedPath(out, path, value); err != nil {
 			return nil, err
 		}
 	}
@@ -61,25 +61,85 @@ func parseSet(kv string, flag string) (string, string, error) {
 	return path, kv[eq+1:], nil
 }
 
-func setNested(m map[string]any, keys []string, v any) error {
-	for i, k := range keys {
-		if i == len(keys)-1 {
-			m[k] = v
+type pathSegment struct {
+	key string
+	idx int // -1 = object field, >=0 = array index within key
+}
+
+func parsePath(path string) []pathSegment {
+	parts := strings.Split(path, ".")
+	segs := make([]pathSegment, 0, len(parts))
+	for _, p := range parts {
+		if open := strings.Index(p, "["); open >= 0 && strings.HasSuffix(p, "]") {
+			key := p[:open]
+			if idx, err := strconv.Atoi(p[open+1 : len(p)-1]); err == nil {
+				segs = append(segs, pathSegment{key: key, idx: idx})
+				continue
+			}
+		}
+		segs = append(segs, pathSegment{key: p, idx: -1})
+	}
+	return segs
+}
+
+func setNestedPath(m map[string]any, path string, v any) error {
+	return setNestedSegs(m, parsePath(path), v)
+}
+
+func setNestedSegs(m map[string]any, segs []pathSegment, v any) error {
+	if len(segs) == 0 {
+		return nil
+	}
+	seg := segs[0]
+	rest := segs[1:]
+
+	if seg.idx < 0 {
+		if len(rest) == 0 {
+			m[seg.key] = v
 			return nil
 		}
-		next, ok := m[k]
-		if !ok {
-			n := map[string]any{}
-			m[k] = n
-			m = n
-			continue
+		switch next := m[seg.key].(type) {
+		case map[string]any:
+			return setNestedSegs(next, rest, v)
+		case nil:
+			child := map[string]any{}
+			m[seg.key] = child
+			return setNestedSegs(child, rest, v)
+		default:
+			return fmt.Errorf("conflicting --set: %s is not an object", seg.key)
 		}
-		nm, ok := next.(map[string]any)
-		if !ok {
-			return fmt.Errorf("conflicting --set: %s is not an object", strings.Join(keys[:i+1], "."))
-		}
-		m = nm
 	}
+
+	var arr []any
+	switch existing := m[seg.key].(type) {
+	case []any:
+		arr = existing
+	case nil:
+		arr = []any{}
+	default:
+		return fmt.Errorf("conflicting --set: %s is not an array", seg.key)
+	}
+	for len(arr) <= seg.idx {
+		arr = append(arr, nil)
+	}
+	if len(rest) == 0 {
+		arr[seg.idx] = v
+	} else {
+		var child map[string]any
+		switch existing := arr[seg.idx].(type) {
+		case map[string]any:
+			child = existing
+		case nil:
+			child = map[string]any{}
+		default:
+			return fmt.Errorf("conflicting --set: %s[%d] is not an object", seg.key, seg.idx)
+		}
+		if err := setNestedSegs(child, rest, v); err != nil {
+			return err
+		}
+		arr[seg.idx] = child
+	}
+	m[seg.key] = arr
 	return nil
 }
 

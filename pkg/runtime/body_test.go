@@ -74,6 +74,59 @@ func TestBuildBodyFromSet_SetStrKeepsStrings(t *testing.T) {
 	}
 }
 
+func TestBuildBodyFromSet_ArrayIndex(t *testing.T) {
+	cases := []struct {
+		name string
+		in   []string
+		want map[string]any
+	}{
+		{
+			name: "simple array",
+			in:   []string{"items[0]=a", "items[1]=b"},
+			want: map[string]any{"items": []any{"a", "b"}},
+		},
+		{
+			name: "array with type inference",
+			in:   []string{"ids[0]=1", "ids[1]=2"},
+			want: map[string]any{"ids": []any{float64(1), float64(2)}},
+		},
+		{
+			name: "array of objects",
+			in:   []string{"containers[0].name=nginx", "containers[0].image=nginx:latest", "containers[1].name=sidecar"},
+			want: map[string]any{
+				"containers": []any{
+					map[string]any{"name": "nginx", "image": "nginx:latest"},
+					map[string]any{"name": "sidecar"},
+				},
+			},
+		},
+		{
+			name: "nested array under object",
+			in:   []string{"spec.ports[0]=8080", "spec.ports[1]=9090"},
+			want: map[string]any{
+				"spec": map[string]any{
+					"ports": []any{float64(8080), float64(9090)},
+				},
+			},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			raw, err := BuildBodyFromSet(tc.in)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			var got map[string]any
+			if err := json.Unmarshal(raw, &got); err != nil {
+				t.Fatalf("invalid JSON: %v", err)
+			}
+			if !reflect.DeepEqual(got, tc.want) {
+				t.Errorf("got %#v, want %#v", got, tc.want)
+			}
+		})
+	}
+}
+
 func TestBuildBodyFromSet_Errors(t *testing.T) {
 	cases := []struct {
 		name string
