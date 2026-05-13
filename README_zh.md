@@ -2,22 +2,15 @@
 
 # lathe
 
-> 把任意 API 规格生成对人和 Agent 都好用的单文件 CLI。
+> 从 OpenAPI、Swagger 和 protobuf API 规格生成 Agent 友好的 Cobra CLI。
 
 [![CI](https://github.com/samzong/lathe/actions/workflows/ci.yml/badge.svg)](https://github.com/samzong/lathe/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Lathe 可以把 Swagger 2.0、OpenAPI 3，以及带 `google.api.http` 注解的
-protobuf API 生成生产级 CLI。生成出来的二进制首先要让人用得顺手，
-同时也要让 Agent 能稳定理解：命令可以发现，参数可以检查，认证状态可以预检，
-执行结果也可以用机器可读格式拿到。
-
-```sh
-acmectl search "create user" --json
-acmectl commands show iam users create-user --json
-acmectl auth status --hostname api.acme.com
-acmectl iam users create-user --set email=alice@example.com -o json
-```
+Lathe 是一个 API-to-CLI 生成器，适合需要同时服务人类用户和 AI Agent 的团队。
+它可以把 Swagger 2.0、OpenAPI 3，以及带 `google.api.http` 注解的 protobuf
+API 生成生产级 Cobra CLI，并内置结构化命令发现、认证元数据、请求体构造器和
+机器可读输出。
 
 生成的 CLI 自带 command catalog JSON、意图搜索、单命令详情 JSON、认证元数据、
 请求体构造器、结构化输出，以及仓库内的 Skill 目录 `skills/<cli-name>/`。
@@ -25,6 +18,25 @@ acmectl iam users create-user --set email=alice@example.com -o json
 ![lathe 架构图](docs/images/architecture.png)
 
 ---
+
+## Lathe 是什么？
+
+Lathe 可以从已有 API 规格生成单文件命令行工具。你不需要手写一套容易和 API
+漂移的 CLI，只需要锁定上游规格、配置 CLI 身份、可选地用 overlay 补强帮助文案，
+然后在 API 变化时重新生成。
+
+最终得到的不只是一个面向人的 API 包装器。Lathe 会生成 Agent 友好的 CLI 表面，
+让命令可以通过机器可读契约被搜索、检查、验证和执行。
+
+## 使用场景
+
+当你需要做这些事时，可以使用 Lathe：
+
+- 从 OpenAPI 3、Swagger 2.0 或 protobuf service 生成 Cobra CLI。
+- 让内部或面向客户的 CLI 和上游 API 规格保持同步。
+- 把 API 操作暴露给 AI Agent，同时避免它们猜 flag、认证、body 结构或输出格式。
+- 交付一个内置命令发现、认证预检、结构化输出和 Agent Skill 文档的单文件二进制。
+- 通过 overlay 改善生成的帮助文案和示例，而不编辑生成的 Go 代码。
 
 ## 为什么需要 Lathe
 
@@ -123,8 +135,13 @@ go build -o bin/acmectl ./cmd/acmectl
 
 ### 4. 使用 CLI
 
+先登录，再发现生成命令、检查命令的精确形态，最后执行：
+
 ```sh
 ./bin/acmectl auth login --hostname api.acme.com
+./bin/acmectl search "create user" --json
+./bin/acmectl commands show iam users create-user --json
+./bin/acmectl auth status --hostname api.acme.com
 ./bin/acmectl iam users create-user \
   --set email=alice@example.com \
   --set role=viewer \

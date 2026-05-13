@@ -2,22 +2,16 @@
 
 # lathe
 
-> Build agent-friendly, single-binary CLIs from any API specs.
+> Generate agent-friendly Cobra CLIs from OpenAPI, Swagger, and protobuf API specs.
 
 [![CI](https://github.com/samzong/lathe/actions/workflows/ci.yml/badge.svg)](https://github.com/samzong/lathe/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Lathe turns Swagger 2.0, OpenAPI 3, and `google.api.http` protobuf APIs into
-production-grade Cobra CLIs. The generated binary is useful for humans, but it
-is also built for agents: every command can be discovered, inspected, validated,
-and executed through machine-readable contracts.
-
-```sh
-acmectl search "create user" --json
-acmectl commands show iam users create-user --json
-acmectl auth status --hostname api.acme.com
-acmectl iam users create-user --set email=alice@example.com -o json
-```
+Lathe is an API-to-CLI generator for teams that want one binary humans can use
+and AI agents can inspect safely. It turns Swagger 2.0, OpenAPI 3, and
+`google.api.http` protobuf APIs into production-grade Cobra CLIs with structured
+command discovery, auth metadata, request body builders, and machine-readable
+output.
 
 Generated CLIs ship with command catalog JSON, intent search, per-command detail
 JSON, auth metadata, body builders, structured output formats, and a repo-local
@@ -26,6 +20,30 @@ Skill directory under `skills/<cli-name>/`.
 ![lathe architecture](docs/images/architecture.png)
 
 ---
+
+## What is Lathe?
+
+Lathe generates single-binary command-line tools from existing API specifications.
+Instead of hand-writing a CLI that can drift away from the API, you pin upstream
+specs, configure the CLI identity, optionally add overlays for better help text,
+and regenerate when the API changes.
+
+The result is more than a human-facing API wrapper. Lathe emits an
+agent-friendly CLI surface where commands can be searched, inspected, validated,
+and executed through machine-readable contracts.
+
+## Use Cases
+
+Use Lathe when you need to:
+
+- Generate a Cobra CLI from OpenAPI 3, Swagger 2.0, or protobuf services.
+- Keep an internal or customer-facing CLI synchronized with upstream API specs.
+- Expose API operations to AI agents without making them guess flags, auth, body
+  shape, or output format.
+- Ship one binary with command discovery, auth preflight, structured output, and
+  generated agent Skill documentation.
+- Improve generated help text and examples through overlays without editing
+  generated Go code.
 
 ## Why Lathe
 
@@ -125,8 +143,13 @@ modules and, by default, a Skill directory at `skills/acmectl/`.
 
 ### 4. Use the CLI
 
+Log in, discover the generated command, inspect its exact shape, then run it:
+
 ```sh
 ./bin/acmectl auth login --hostname api.acme.com
+./bin/acmectl search "create user" --json
+./bin/acmectl commands show iam users create-user --json
+./bin/acmectl auth status --hostname api.acme.com
 ./bin/acmectl iam users create-user \
   --set email=alice@example.com \
   --set role=viewer \
