@@ -22,7 +22,7 @@ func TestBuildCatalog_UsesAttachedSpec(t *testing.T) {
 				{Name: "id", Flag: "id", In: InPath, GoType: "string", Required: true, Help: "User id"},
 				{Name: "workspace", Flag: "workspace", In: InQuery, GoType: "string", Default: "default", Enum: []string{"default", "prod"}, Format: "slug", Help: "Target workspace"},
 			},
-			RequestBody: &RequestBody{Required: true, MediaType: "application/json"},
+			RequestBody: &RequestBody{Required: true, MediaType: "application/json", Schema: &SchemaSpec{Type: "object", Properties: map[string]*SchemaSpec{"name": {Type: "string"}}}},
 			Output: OutputHints{
 				ListPath:          "data.items",
 				DefaultColumns:    []string{"id", "name"},
@@ -61,6 +61,9 @@ func TestBuildCatalog_UsesAttachedSpec(t *testing.T) {
 	if cmd.Body == nil || !cmd.Body.Required || cmd.Body.MediaType != "application/json" {
 		t.Fatalf("body = %+v", cmd.Body)
 	}
+	if cmd.Body.Schema == nil || cmd.Body.Schema.Properties["name"].Type != "string" {
+		t.Fatalf("body schema = %+v", cmd.Body.Schema)
+	}
 	if len(cmd.Flags) != 2 {
 		t.Fatalf("flags = %d, want 2", len(cmd.Flags))
 	}
@@ -87,6 +90,9 @@ func TestBuildCatalog_UsesAttachedSpec(t *testing.T) {
 	}
 	if !reflect.DeepEqual(roundTrip.Commands[0].Path, cmd.Path) {
 		t.Fatalf("round-trip path = %#v", roundTrip.Commands[0].Path)
+	}
+	if roundTrip.Commands[0].Body.Schema.Properties["name"].Type != "string" {
+		t.Fatalf("round-trip body schema = %+v", roundTrip.Commands[0].Body.Schema)
 	}
 }
 

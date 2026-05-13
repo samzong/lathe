@@ -19,6 +19,7 @@ func TestNormalize_Golden(t *testing.T) {
 		{"minimal-get", minimalGet},
 		{"request-body-required", requestBodyRequired},
 		{"request-body-optional", requestBodyOptional},
+		{"request-body-ref-schema", requestBodyRefSchema},
 		{"list-response", listResponse},
 		{"no-op-id", noOpID},
 		{"multiple-methods-same-path", multipleMethodsSamePath},
@@ -91,6 +92,24 @@ func requestBodyOptional() *rawir.RawModule {
 				{Name: "id", In: "path", Required: true, Type: "string"},
 			},
 			RequestBody: &rawir.RawRequestBody{Required: false},
+			Responses:   map[string]*rawir.RawResponse{},
+		}},
+	}
+}
+
+func requestBodyRefSchema() *rawir.RawModule {
+	return &rawir.RawModule{
+		Name: "demo",
+		Schemas: map[string]*rawir.RawSchema{
+			"Pet": {Type: "object", Properties: map[string]*rawir.RawSchema{"name": {Type: "string"}}},
+		},
+		Operations: []rawir.RawOperation{{
+			Group:       "Pets",
+			OperationID: "Pets_CreatePet",
+			Summary:     "Create a pet.",
+			Method:      "POST",
+			Path:        "/pets",
+			RequestBody: &rawir.RawRequestBody{Required: true, Schema: &rawir.RawSchema{Ref: rawir.RefPrefix + "Pet"}},
 			Responses:   map[string]*rawir.RawResponse{},
 		}},
 	}

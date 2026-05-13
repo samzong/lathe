@@ -17,7 +17,7 @@ func TestRenderModule_AppliesOverlay(t *testing.T) {
 	}
 
 	specs := []runtime.CommandSpec{
-		{Group: "Addon", Use: "install-addon", Short: "raw short", Method: "POST", PathTpl: "/api/v1/addon", RequestBody: &runtime.RequestBody{Required: true}},
+		{Group: "Addon", Use: "install-addon", Short: "raw short", Method: "POST", PathTpl: "/api/v1/addon", RequestBody: &runtime.RequestBody{Required: true, Schema: &runtime.SchemaSpec{Type: "object", Properties: map[string]*runtime.SchemaSpec{"name": {Type: "string"}}}}},
 		{Group: "Addon", Use: "untouched", Short: "untouched short", Method: "GET", PathTpl: "/api/v1/x"},
 	}
 	overrides := map[string]overlay.Override{
@@ -48,6 +48,11 @@ func TestRenderModule_AppliesOverlay(t *testing.T) {
 		`func Mount(root *cobra.Command) error`,
 		`if err := runtime.AssertSchema(generatedSchemaVersion); err != nil`,
 		`return err`,
+		`Schema:`,
+		`&runtime.SchemaSpec{`,
+		`Properties: map[string]*runtime.SchemaSpec`,
+		`"name":`,
+		`Type: "string"`,
 	} {
 		if !strings.Contains(got, want) {
 			t.Errorf("output missing %q", want)

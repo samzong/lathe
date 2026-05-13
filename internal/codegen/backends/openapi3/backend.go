@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -215,6 +216,17 @@ func convertOp(op *operation, method, path string, pathParams []parameter, globa
 
 	if op.RequestBody != nil {
 		out.RequestBody = &rawir.RawRequestBody{Required: op.RequestBody.Required}
+		if mt, ok := op.RequestBody.Content["application/json"]; ok {
+			out.RequestBody.MediaType = "application/json"
+			out.RequestBody.Schema = convertSchema(mt.Schema)
+		} else if len(op.RequestBody.Content) > 0 {
+			mediaTypes := make([]string, 0, len(op.RequestBody.Content))
+			for ct := range op.RequestBody.Content {
+				mediaTypes = append(mediaTypes, ct)
+			}
+			sort.Strings(mediaTypes)
+			out.RequestBody.Schema = convertSchema(op.RequestBody.Content[mediaTypes[0]].Schema)
+		}
 	}
 
 	for code, resp := range op.Responses {

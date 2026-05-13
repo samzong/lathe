@@ -22,6 +22,8 @@ func TestParse_Golden(t *testing.T) {
 	}{
 		{"google-api-http-get", buildGoogleAPIHTTPGet},
 		{"google-api-http-post-body", buildGoogleAPIHTTPPostBody},
+		{"google-api-http-post-body-star-path", buildGoogleAPIHTTPPostBodyStarPath},
+		{"google-api-http-post-body-field", buildGoogleAPIHTTPPostBodyField},
 		{"scalar-type-mapping", buildScalarTypeMapping},
 		{"message-ref", buildMessageRef},
 		{"no-http-rule", buildNoHTTPRule},
@@ -78,6 +80,16 @@ func messageField(name string, num int32, fullTypeName string) *descriptorpb.Fie
 		Number:   proto.Int32(num),
 		Type:     descriptorpb.FieldDescriptorProto_TYPE_MESSAGE.Enum(),
 		Label:    descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(),
+		TypeName: proto.String(fullTypeName),
+	}
+}
+
+func repeatedMessageField(name string, num int32, fullTypeName string) *descriptorpb.FieldDescriptorProto {
+	return &descriptorpb.FieldDescriptorProto{
+		Name:     proto.String(name),
+		Number:   proto.Int32(num),
+		Type:     descriptorpb.FieldDescriptorProto_TYPE_MESSAGE.Enum(),
+		Label:    descriptorpb.FieldDescriptorProto_LABEL_REPEATED.Enum(),
 		TypeName: proto.String(fullTypeName),
 	}
 }
@@ -162,6 +174,82 @@ func buildGoogleAPIHTTPPostBody() *descriptorpb.FileDescriptorSet {
 		)},
 	}
 	return fileSet("demo", []*descriptorpb.DescriptorProto{req, user}, svc)
+}
+
+func buildGoogleAPIHTTPPostBodyStarPath() *descriptorpb.FileDescriptorSet {
+	labelsEntry := &descriptorpb.DescriptorProto{
+		Name: proto.String("LabelsEntry"),
+		Field: []*descriptorpb.FieldDescriptorProto{
+			scalarField("key", 1, descriptorpb.FieldDescriptorProto_TYPE_STRING),
+			scalarField("value", 2, descriptorpb.FieldDescriptorProto_TYPE_STRING),
+		},
+		Options: &descriptorpb.MessageOptions{MapEntry: proto.Bool(true)},
+	}
+	req := &descriptorpb.DescriptorProto{
+		Name:       proto.String("UpdateUserRequest"),
+		NestedType: []*descriptorpb.DescriptorProto{labelsEntry},
+		Field: []*descriptorpb.FieldDescriptorProto{
+			scalarField("id", 1, descriptorpb.FieldDescriptorProto_TYPE_STRING),
+			scalarField("name", 2, descriptorpb.FieldDescriptorProto_TYPE_STRING),
+			scalarField("email", 3, descriptorpb.FieldDescriptorProto_TYPE_STRING),
+			repeatedMessageField("labels", 4, ".demo.UpdateUserRequest.LabelsEntry"),
+		},
+	}
+	user := &descriptorpb.DescriptorProto{
+		Name: proto.String("User"),
+		Field: []*descriptorpb.FieldDescriptorProto{
+			scalarField("id", 1, descriptorpb.FieldDescriptorProto_TYPE_STRING),
+		},
+	}
+	svc := &descriptorpb.ServiceDescriptorProto{
+		Name: proto.String("Users"),
+		Method: []*descriptorpb.MethodDescriptorProto{methodWithHTTP(
+			"UpdateUser",
+			".demo.UpdateUserRequest",
+			".demo.User",
+			&annotations.HttpRule{
+				Pattern: &annotations.HttpRule_Post{Post: "/users/{id}"},
+				Body:    "*",
+			},
+		)},
+	}
+	return fileSet("demo", []*descriptorpb.DescriptorProto{req, user}, svc)
+}
+
+func buildGoogleAPIHTTPPostBodyField() *descriptorpb.FileDescriptorSet {
+	payload := &descriptorpb.DescriptorProto{
+		Name: proto.String("CreateUserPayload"),
+		Field: []*descriptorpb.FieldDescriptorProto{
+			scalarField("name", 1, descriptorpb.FieldDescriptorProto_TYPE_STRING),
+			scalarField("email", 2, descriptorpb.FieldDescriptorProto_TYPE_STRING),
+		},
+	}
+	req := &descriptorpb.DescriptorProto{
+		Name: proto.String("CreateUserRequest"),
+		Field: []*descriptorpb.FieldDescriptorProto{
+			messageField("user", 1, ".demo.CreateUserPayload"),
+			scalarField("trace_id", 2, descriptorpb.FieldDescriptorProto_TYPE_STRING),
+		},
+	}
+	user := &descriptorpb.DescriptorProto{
+		Name: proto.String("User"),
+		Field: []*descriptorpb.FieldDescriptorProto{
+			scalarField("id", 1, descriptorpb.FieldDescriptorProto_TYPE_STRING),
+		},
+	}
+	svc := &descriptorpb.ServiceDescriptorProto{
+		Name: proto.String("Users"),
+		Method: []*descriptorpb.MethodDescriptorProto{methodWithHTTP(
+			"CreateUser",
+			".demo.CreateUserRequest",
+			".demo.User",
+			&annotations.HttpRule{
+				Pattern: &annotations.HttpRule_Post{Post: "/users"},
+				Body:    "user",
+			},
+		)},
+	}
+	return fileSet("demo", []*descriptorpb.DescriptorProto{payload, req, user}, svc)
 }
 
 func buildScalarTypeMapping() *descriptorpb.FileDescriptorSet {

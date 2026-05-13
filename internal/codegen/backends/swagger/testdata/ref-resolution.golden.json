@@ -10,7 +10,13 @@
       "Path": "/pets",
       "Parameters": null,
       "RequestBody": {
-        "Required": true
+        "Required": true,
+        "Schema": {
+          "Ref": "#/definitions/Pet",
+          "Type": "",
+          "Properties": null,
+          "Items": null
+        }
       },
       "Responses": {
         "200": {

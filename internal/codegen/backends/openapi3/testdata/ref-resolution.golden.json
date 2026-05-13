@@ -10,7 +10,14 @@
       "Path": "/pets",
       "Parameters": null,
       "RequestBody": {
-        "Required": true
+        "Required": true,
+        "MediaType": "application/json",
+        "Schema": {
+          "Ref": "#/definitions/Pet",
+          "Type": "",
+          "Properties": null,
+          "Items": null
+        }
       },
       "Responses": {
         "200": {

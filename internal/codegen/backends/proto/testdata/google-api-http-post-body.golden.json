@@ -10,7 +10,26 @@
       "Path": "/users",
       "Parameters": null,
       "RequestBody": {
-        "Required": true
+        "Required": true,
+        "Schema": {
+          "Ref": "",
+          "Type": "object",
+          "Properties": {
+            "email": {
+              "Ref": "",
+              "Type": "string",
+              "Properties": null,
+              "Items": null
+            },
+            "name": {
+              "Ref": "",
+              "Type": "string",
+              "Properties": null,
+              "Items": null
+            }
+          },
+          "Items": null
+        }
       },
       "Responses": {
         "200": {

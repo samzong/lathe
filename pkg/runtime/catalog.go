@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const CatalogSchemaVersion = 1
+const CatalogSchemaVersion = 2
 const DefaultSearchLimit = 20
 
 const catalogCommandAnnotation = "lathe.catalog.command"
@@ -72,8 +72,9 @@ type CatalogAuth struct {
 }
 
 type CatalogBody struct {
-	Required  bool   `json:"required"`
-	MediaType string `json:"media_type,omitempty"`
+	Required  bool        `json:"required"`
+	MediaType string      `json:"media_type,omitempty"`
+	Schema    *SchemaSpec `json:"schema,omitempty"`
 }
 
 type CatalogFlag struct {
@@ -270,7 +271,7 @@ func catalogCommand(service string, spec CommandSpec, path []string) CatalogComm
 		Deprecated: spec.Deprecated,
 	}
 	if spec.RequestBody != nil {
-		cmd.Body = &CatalogBody{Required: spec.RequestBody.Required, MediaType: spec.RequestBody.MediaType}
+		cmd.Body = &CatalogBody{Required: spec.RequestBody.Required, MediaType: spec.RequestBody.MediaType, Schema: spec.RequestBody.Schema}
 	}
 	return cmd
 }

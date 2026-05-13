@@ -203,8 +203,15 @@ func (idx *index) buildOperation(
 		})
 	}
 
+	extra := map[string]*rawir.RawSchema{}
 	if rule.body != "" && reqMsg != nil {
-		op.RequestBody = &rawir.RawRequestBody{Required: true}
+		var schema *rawir.RawSchema
+		if rule.body == "*" {
+			schema = idx.bodyWildcardSchema(reqMsg, pathParamSet, extra)
+		} else if field := findField(reqMsg, rule.body); field != nil {
+			schema = idx.fieldToSchema(field, extra, map[string]bool{})
+		}
+		op.RequestBody = &rawir.RawRequestBody{Required: true, Schema: schema}
 	}
 
 	if reqMsg != nil {
@@ -242,7 +249,6 @@ func (idx *index) buildOperation(
 		}
 	}
 
-	extra := map[string]*rawir.RawSchema{}
 	if respMsg != nil {
 		respSchema := idx.messageToSchema(respMsg, extra, map[string]bool{})
 		op.Responses["200"] = &rawir.RawResponse{Schema: respSchema}
@@ -389,6 +395,26 @@ func (idx *index) fullNameOf(entry *messageEntry) string {
 
 func schemaKey(fullTypeName string) string {
 	return strings.TrimPrefix(fullTypeName, ".")
+}
+
+func (idx *index) bodyWildcardSchema(reqMsg *messageEntry, pathParamSet map[string]bool, out map[string]*rawir.RawSchema) *rawir.RawSchema {
+	if reqMsg == nil {
+		return nil
+	}
+	schema := &rawir.RawSchema{Type: "object", Properties: map[string]*rawir.RawSchema{}}
+	for _, f := range reqMsg.msg.Field {
+		if pathParamSet[f.GetName()] {
+			continue
+		}
+		if idx.isMapField(f) {
+			continue
+		}
+		schema.Properties[jsonName(f)] = idx.fieldToSchema(f, out, map[string]bool{})
+	}
+	if len(schema.Properties) == 0 {
+		schema.Properties = nil
+	}
+	return schema
 }
 
 func (idx *index) fieldToSchema(f *descriptorpb.FieldDescriptorProto, out map[string]*rawir.RawSchema, visiting map[string]bool) *rawir.RawSchema {
