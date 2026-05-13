@@ -37,7 +37,9 @@ type RawParameter struct {
 }
 
 type RawRequestBody struct {
-	Required bool
+	Required  bool
+	MediaType string     `json:",omitempty"`
+	Schema    *RawSchema `json:",omitempty"`
 }
 
 type RawResponse struct {

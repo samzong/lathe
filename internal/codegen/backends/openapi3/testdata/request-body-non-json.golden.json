@@ -1,0 +1,34 @@
+{
+  "Name": "demo",
+  "Operations": [
+    {
+      "Group": "Exports",
+      "OperationID": "Export_Create",
+      "Summary": "Create export.",
+      "Description": "",
+      "Method": "POST",
+      "Path": "/exports",
+      "Parameters": null,
+      "RequestBody": {
+        "Required": true,
+        "Schema": {
+          "Ref": "",
+          "Type": "object",
+          "Properties": {
+            "id": {
+              "Ref": "",
+              "Type": "string",
+              "Properties": null,
+              "Items": null
+            }
+          },
+          "Items": null
+        }
+      },
+      "Responses": {},
+      "Produces": null,
+      "Security": null
+    }
+  ],
+  "Schemas": {}
+}

@@ -13,8 +13,7 @@
     "PathTpl": "/resources",
     "Params": null,
     "RequestBody": {
-      "Required": true,
-      "MediaType": ""
+      "Required": true
     },
     "Output": {
       "ListPath": "",

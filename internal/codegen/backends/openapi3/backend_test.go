@@ -21,6 +21,7 @@ func TestParse_Golden(t *testing.T) {
 		{"ref-resolution", refResolutionJSON, ".json"},
 		{"path-and-query-params", pathAndQueryJSON, ".json"},
 		{"request-body", requestBodyJSON, ".json"},
+		{"request-body-non-json", requestBodyNonJSON, ".json"},
 		{"path-level-params", pathLevelParamsJSON, ".json"},
 		{"yaml-input", petstoreMinYAML, ".yaml"},
 	}
@@ -217,6 +218,27 @@ const requestBodyJSON = `{
           "email": {"type": "string"},
           "role": {"type": "string"}
         }
+      }
+    }
+  }
+}`
+
+const requestBodyNonJSON = `{
+  "openapi": "3.0.3",
+  "paths": {
+    "/exports": {
+      "post": {
+        "operationId": "Export_Create",
+        "tags": ["Exports"],
+        "summary": "Create export.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "text/plain": {"schema": {"type": "string"}},
+            "application/xml": {"schema": {"type": "object", "properties": {"id": {"type": "string"}}}}
+          }
+        },
+        "responses": {}
       }
     }
   }

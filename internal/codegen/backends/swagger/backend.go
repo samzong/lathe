@@ -168,7 +168,7 @@ func convertOp(op operation, method, path string, docProduces []string, globalSe
 	out.Produces = produces
 	for _, p := range op.Parameters {
 		if p.In == "body" {
-			out.RequestBody = &rawir.RawRequestBody{Required: p.Required}
+			out.RequestBody = &rawir.RawRequestBody{Required: p.Required, Schema: convertSchema(p.Schema)}
 			continue
 		}
 		out.Parameters = append(out.Parameters, rawir.RawParameter{

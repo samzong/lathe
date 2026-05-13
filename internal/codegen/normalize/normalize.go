@@ -48,7 +48,7 @@ func Normalize(mod *rawir.RawModule) []runtime.CommandSpec {
 				}
 			}
 			if op.RequestBody != nil {
-				spec.RequestBody = &runtime.RequestBody{Required: op.RequestBody.Required}
+				spec.RequestBody = &runtime.RequestBody{Required: op.RequestBody.Required, MediaType: op.RequestBody.MediaType, Schema: runtimeSchema(op.RequestBody.Schema, mod.Schemas, map[string]bool{})}
 			}
 			lp, itemRef := deriveList(op, mod.Schemas)
 			spec.Output.ListPath = lp
@@ -391,6 +391,37 @@ func copyVisited(in map[string]bool) map[string]bool {
 	out := make(map[string]bool, len(in)+1)
 	for k, v := range in {
 		out[k] = v
+	}
+	return out
+}
+
+func runtimeSchema(s *rawir.RawSchema, defs map[string]*rawir.RawSchema, visited map[string]bool) *runtime.SchemaSpec {
+	if s == nil {
+		return nil
+	}
+	if s.Ref != "" {
+		if visited[s.Ref] {
+			return &runtime.SchemaSpec{Ref: s.Ref}
+		}
+		resolved := rawir.Resolve(s, defs)
+		if resolved != nil {
+			next := copyVisited(visited)
+			next[s.Ref] = true
+			return runtimeSchema(resolved, defs, next)
+		}
+	}
+	out := &runtime.SchemaSpec{Type: s.Type}
+	if s.Ref != "" {
+		out.Ref = s.Ref
+	}
+	if len(s.Properties) > 0 {
+		out.Properties = make(map[string]*runtime.SchemaSpec, len(s.Properties))
+		for k, v := range s.Properties {
+			out.Properties[k] = runtimeSchema(v, defs, visited)
+		}
+	}
+	if s.Items != nil {
+		out.Items = runtimeSchema(s.Items, defs, visited)
 	}
 	return out
 }

@@ -1,6 +1,6 @@
 package runtime
 
-const SchemaVersion = 4
+const SchemaVersion = 5
 
 type CommandSpec struct {
 	Group       string
@@ -42,7 +42,15 @@ const (
 
 type RequestBody struct {
 	Required  bool
-	MediaType string
+	MediaType string      `json:",omitempty"`
+	Schema    *SchemaSpec `json:",omitempty"`
+}
+
+type SchemaSpec struct {
+	Ref        string                 `json:"ref,omitempty"`
+	Type       string                 `json:"type,omitempty"`
+	Properties map[string]*SchemaSpec `json:"properties,omitempty"`
+	Items      *SchemaSpec            `json:"items,omitempty"`
 }
 
 type OutputHints struct {
