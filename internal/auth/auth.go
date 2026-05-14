@@ -249,12 +249,9 @@ func readSecret(prompt string, fromStdin bool) (string, error) {
 	}
 	if term.IsTerminal(int(os.Stdin.Fd())) {
 		fmt.Fprintf(os.Stderr, "? Paste your %s: ", prompt)
-		b, err := term.ReadPassword(int(os.Stdin.Fd()))
+		s, err := readPasswordRobust()
 		fmt.Fprintln(os.Stderr)
-		if err != nil {
-			return "", err
-		}
-		return strings.TrimSpace(string(b)), nil
+		return s, err
 	}
 	line, err := readLine(os.Stdin)
 	if err != nil {
@@ -273,18 +270,61 @@ func readToken(fromStdin bool) (string, error) {
 	}
 	if term.IsTerminal(int(os.Stdin.Fd())) {
 		fmt.Fprint(os.Stderr, "? Paste your authentication token: ")
-		b, err := term.ReadPassword(int(os.Stdin.Fd()))
+		s, err := readPasswordRobust()
 		fmt.Fprintln(os.Stderr)
-		if err != nil {
-			return "", err
-		}
-		return strings.TrimSpace(string(b)), nil
+		return s, err
 	}
 	line, err := readLine(os.Stdin)
 	if err != nil {
 		return "", err
 	}
 	return strings.TrimSpace(line), nil
+}
+
+// readPasswordRobust reads a secret from the terminal without echo.
+// Unlike term.ReadPassword, it uses raw mode and treats both \r and \n as
+// line terminators. This avoids a hang on systems where ICRNL (CR→NL
+// translation) is unreliable (e.g. Darwin 25 / macOS 16).
+func readPasswordRobust() (s string, err error) {
+	fd := int(os.Stdin.Fd())
+	state, rawErr := term.MakeRaw(fd)
+	if rawErr != nil {
+		// Fallback: term.ReadPassword relies on ICRNL but is better than nothing.
+		b, err := term.ReadPassword(fd)
+		return strings.TrimSpace(string(b)), err
+	}
+	defer func() {
+		if rerr := term.Restore(fd, state); rerr != nil && err == nil {
+			err = rerr
+		}
+	}()
+
+	var buf []byte
+	scratch := make([]byte, 1)
+	for {
+		_, err := os.Stdin.Read(scratch)
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return "", err
+		}
+		switch scratch[0] {
+		case '\r', '\n':
+			return strings.TrimSpace(string(buf)), nil
+		case 3: // Ctrl+C
+			return "", errors.New("interrupted")
+		case 4: // Ctrl+D — EOF in raw mode (tty no longer translates it)
+			return "", errors.New("interrupted")
+		case 127, '\b': // DEL / backspace
+			if len(buf) > 0 {
+				buf = buf[:len(buf)-1]
+			}
+		default:
+			buf = append(buf, scratch[0])
+		}
+	}
+	return strings.TrimSpace(string(buf)), nil
 }
 
 func readLine(r io.Reader) (string, error) {
