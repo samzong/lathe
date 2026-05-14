@@ -122,7 +122,7 @@ func buildCmd(s CommandSpec) *cobra.Command {
 					}
 					continue
 				}
-				if !cmd.Flags().Changed(p.Flag) {
+				if !cmd.Flags().Changed(p.Flag) && p.Default == "" {
 					continue
 				}
 				switch v := vals[p.Name].(type) {
