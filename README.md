@@ -98,12 +98,14 @@ then configure two files.
 
 ### Install the Tools
 
-Lathe release archives include two command-line tools:
+Lathe release archives include one command-line tool, `lathe`, with generation
+subcommands:
 
-- `lathe-specsync`: sync pinned upstream specs into the local cache.
-- `lathe-codegen`: generate runtime command specs and optional Skill files.
+- `lathe specsync`: sync pinned upstream specs into the local cache.
+- `lathe codegen`: generate runtime command specs and optional Skill files.
+- `lathe bootstrap`: run `specsync` and `codegen` in one pass.
 
-Download the archive for your platform from the [latest release](https://github.com/samzong/lathe/releases/latest), unpack it, and put both binaries on your `PATH`.
+Download the archive for your platform from the [latest release](https://github.com/samzong/lathe/releases/latest), unpack it, and put `lathe` on your `PATH`.
 
 When working from a source checkout, you can use the Make targets shown below instead of installing the release tools.
 
@@ -228,7 +230,7 @@ execution details.
 Disable Skill output when needed:
 
 ```sh
-go run ./cmd/codegen -skill-root ""
+go run ./cmd/lathe codegen -skill-root ""
 ```
 
 ## Configuration
@@ -287,7 +289,7 @@ commands:
 Run codegen with an overlay directory:
 
 ```sh
-go run ./cmd/codegen -overlay internal/overlay
+go run ./cmd/lathe codegen -overlay internal/overlay
 ```
 
 ## Runtime Features
@@ -326,9 +328,9 @@ body:
 
 Lathe has two phases:
 
-1. `cmd/specsync` clones pinned upstream specs, verifies the resolved commit
+1. `lathe specsync` clones pinned upstream specs, verifies the resolved commit
    SHA, and writes local spec state.
-2. `cmd/codegen` normalizes specs into one intermediate representation, applies
+2. `lathe codegen` normalizes specs into one intermediate representation, applies
    overlays, renders Go command modules, and renders the Skill directory.
 
 The generated CLI uses `pkg/lathe` and `pkg/runtime` for the shared command

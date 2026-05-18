@@ -5,9 +5,9 @@ LATHE_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 DIR="$(mktemp -d)"
 trap 'rm -rf "$DIR"' EXIT
 
-echo "==> Building codegen tool..."
-CODEGEN="$DIR/codegen"
-(cd "$LATHE_ROOT" && go build -o "$CODEGEN" ./cmd/codegen)
+echo "==> Building lathe tool..."
+LATHE="$DIR/lathe"
+(cd "$LATHE_ROOT" && go build -o "$LATHE" ./cmd/lathe)
 
 cd "$DIR"
 
@@ -296,7 +296,7 @@ resolved_sha: "0000000000000000000000000000000000000000"
 EOF
 
 echo "==> Running codegen..."
-"$CODEGEN" -sources specs/sources.yaml -cache .cache
+"$LATHE" codegen -sources specs/sources.yaml -cache .cache
 test -f skills/richapi/SKILL.md
 
 echo "==> Inspecting generated code..."

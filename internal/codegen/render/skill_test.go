@@ -70,7 +70,7 @@ func TestRenderSkillDirectory_GeneratesSkillStructure(t *testing.T) {
 		}
 	}
 
-	if marker := readFile(t, dir, "skills/acmectl/"+skillOwnerFile); !strings.Contains(marker, "cmd/codegen") {
+	if marker := readFile(t, dir, "skills/acmectl/"+skillOwnerFile); !strings.Contains(marker, "lathe codegen") {
 		t.Fatalf("owner marker missing expected content: %s", marker)
 	}
 
@@ -138,6 +138,28 @@ func TestRenderSkillDirectory_RefusesExistingUnownedDirectory(t *testing.T) {
 	}
 	if got := readFile(t, dir, "skills/acmectl/sentinel.txt"); got != "keep" {
 		t.Fatalf("sentinel was changed: %q", got)
+	}
+}
+
+func TestRenderSkillDirectory_RefusesLegacyOwnerMarker(t *testing.T) {
+	dir := t.TempDir()
+	root := filepath.Join(dir, "skills", "acmectl")
+	if err := os.MkdirAll(root, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, ".lathe-codegen-skill"), []byte("legacy marker\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	err := RenderSkillDirectory(root, &config.Manifest{CLI: config.CLIInfo{Name: "acmectl"}}, nil)
+	if err == nil {
+		t.Fatal("expected legacy owner marker to be rejected")
+	}
+	if !strings.Contains(err.Error(), "refusing to remove") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got := readFile(t, dir, "skills/acmectl/.lathe-codegen-skill"); got != "legacy marker\n" {
+		t.Fatalf("legacy marker was changed: %q", got)
 	}
 }
 

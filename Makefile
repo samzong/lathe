@@ -1,12 +1,6 @@
-GO       ?= go
-OUT_DIR  := ./bin
-VERSION  ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
-COMMIT   := $(shell git rev-parse --short HEAD 2>/dev/null || echo none)
-DATE     := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
-LDFLAGS  := -s -w \
-  -X github.com/samzong/lathe/pkg/lathe.Version=$(VERSION) \
-  -X github.com/samzong/lathe/pkg/lathe.Commit=$(COMMIT) \
-  -X github.com/samzong/lathe/pkg/lathe.Date=$(DATE)
+GO          ?= go
+GORELEASER ?= goreleaser
+OUT_DIR     := ./bin
 
 BOLD  := \033[1m
 CYAN  := \033[36m
@@ -15,18 +9,28 @@ RESET := \033[0m
 
 .DEFAULT_GOAL := help
 
+# ── Build ────────────────────────────────────────────────────────────────────
+
+.PHONY: build
+
+build: ## Build local lathe binary into ./bin/lathe
+	@mkdir -p $(OUT_DIR)
+	$(GORELEASER) build --snapshot --clean --single-target --output $(OUT_DIR)/lathe
+	@printf '\n$(GREEN)  ✓ built $(CYAN)$(OUT_DIR)/lathe$(RESET)\n\n'
+
 # ── Bootstrap ────────────────────────────────────────────────────────────────
 
 .PHONY: bootstrap sync-specs gen
 
-bootstrap: sync-specs gen ## First-time setup — sync upstream specs + generate command tree
+bootstrap: ## First-time setup — sync upstream specs + generate command tree
+	$(GO) run ./cmd/lathe bootstrap
 	@printf '\n$(GREEN)  ✓ bootstrap complete$(RESET) — next: $(CYAN)go build -o $(OUT_DIR)/<name> ./cmd/<name>$(RESET)\n\n'
 
 sync-specs: ## Fetch upstream specs pinned in specs/sources.yaml
-	$(GO) run ./cmd/specsync
+	$(GO) run ./cmd/lathe specsync
 
 gen: ## Regenerate internal/generated from cached specs
-	$(GO) run ./cmd/codegen
+	$(GO) run ./cmd/lathe codegen
 
 # ── Quality ──────────────────────────────────────────────────────────────────
 
