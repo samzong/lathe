@@ -9,3 +9,4 @@
 /internal/generated/
 examples/*/bin/
 examples/*/skills/
+examples/*/internal/generated/

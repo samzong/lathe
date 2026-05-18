@@ -1,0 +1,58 @@
+openapi: "3.0.3"
+info:
+  title: Petstore
+  version: "1.0.0"
+paths:
+  /pets:
+    get:
+      operationId: Pet_List
+      tags: [Pets]
+      summary: List all pets
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Pet"
+  /pets/{id}:
+    get:
+      operationId: Pet_Get
+      tags: [Pets]
+      summary: Get a pet by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pet"
+    delete:
+      operationId: Pet_Delete
+      tags: [Pets]
+      summary: Delete a pet
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204": {}
+components:
+  schemas:
+    Pet:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        status:
+          type: string

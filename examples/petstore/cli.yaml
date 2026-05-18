@@ -1,0 +1,3 @@
+cli:
+  name: petstore
+  short: "Petstore CLI demo"

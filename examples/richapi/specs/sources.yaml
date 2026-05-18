@@ -1,0 +1,7 @@
+sources:
+  acme:
+    repo_url: https://example.com/acme.git
+    pinned_tag: v1.0.0
+    backend: openapi3
+    openapi3:
+      files: [openapi.yaml]

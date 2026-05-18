@@ -1,0 +1,4 @@
+source: pets
+backend: openapi3
+synced_from: v1.0.0
+resolved_sha: "0000000000000000000000000000000000000000"
