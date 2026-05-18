@@ -1,27 +1,32 @@
 # Showcase
 
-This page collects runnable Lathe examples and public adoption notes.
+This page collects Lathe generation paths and public adoption notes.
 
-## 60-Second Demo
+## CLI Generation Path
 
-Run the Petstore demo from a source checkout:
+Use the `lathe` CLI to generate a downstream Cobra CLI from pinned API specs:
 
 ```sh
-bash examples/petstore/run.sh
+go mod init example.com/acme   # skip when go.mod already exists
+lathe bootstrap
+go mod tidy
+go build -o bin/<cli-name> ./cmd/<cli-name>
 ```
 
-The script builds a generated CLI from a small OpenAPI 3 spec, then demonstrates the agent loop:
+Then verify the generated agent-facing surface:
 
-1. `petstore search "list pets" --json`
-2. `petstore commands show pets pets list --json`
-3. `petstore commands schema --json`
+1. `<cli-name> search "<intent>" --json`
+2. `<cli-name> commands show <path...> --json`
+3. `<cli-name> commands schema --json`
 
 This is the core Lathe promise: agents discover commands, inspect exact contracts, check schema compatibility, and only then execute.
 
 ## Examples
 
-- `examples/petstore`: minimal OpenAPI 3 workflow from spec to generated CLI.
-- `examples/richapi`: broader dogfood example covering pagination, enums, headers, request bodies, public endpoints, streaming hints, and long-running operation hints.
+- `examples/petstore`: minimal OpenAPI 3 path from pinned spec to generated CLI.
+- `examples/richapi`: broader generated CLI path covering pagination, enums, headers, request bodies, public endpoints, streaming hints, and long-running operation hints.
+
+See [CLI Usage](docs/cli-usage.md) for the exact files, commands, and generated CLI verification loop.
 
 ## Add a Showcase
 

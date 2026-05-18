@@ -1,25 +1,14 @@
-# Petstore CLI — end-to-end example
+# Petstore CLI Path
 
-Demonstrates the full lathe workflow: OpenAPI 3 spec → codegen → working CLI binary.
+Demonstrates the minimal Lathe workflow: OpenAPI 3 spec -> codegen -> working CLI binary.
 
-## Run it
+## Path
 
-```sh
-bash examples/petstore/run.sh
-```
-
-The script creates a throwaway project in `/tmp`, runs codegen, builds a real binary, and prints `--help`, `search`, `commands show`, and `commands schema` output. Everything is cleaned up on exit.
-
-## What the script does
-
-1. Builds the `codegen` tool from this repo
-2. Creates a Go module with `replace` directive pointing at local lathe
-3. Writes `cli.yaml` (CLI identity) and `specs/sources.yaml` (source config)
-4. Pre-stages a Petstore OpenAPI 3 spec (replaces `make sync-specs`)
-5. Runs codegen → produces `internal/generated/`
-6. Writes `cmd/petstore/main.go` (wiring code)
-7. `go build` → runs `petstore --help`
-8. Demonstrates the agent loop with `search`, `commands show`, and `commands schema`
+1. Inspect `cli.yaml`, `specs/sources.yaml`, and the checked-in fixture cache.
+2. Run `lathe codegen -cache fixtures`.
+3. Use `cmd/petstore/main.go` to mount `internal/generated`.
+4. Run `go mod tidy` and `go build -o bin/petstore ./cmd/petstore`.
+5. Verify the generated agent loop with `search`, `commands show`, and `commands schema`.
 
 ## Expected output
 
@@ -43,7 +32,7 @@ Additional Commands:
 
 ## Adapting for your project
 
-See the [Quick start](../../README.md#quick-start) in the main README. The key files are:
+See [CLI Usage](../../docs/cli-usage.md) for the full command sequence. The key files are:
 
 - **`cli.yaml`** — CLI name, description, auth endpoint
 - **`specs/sources.yaml`** — upstream specs pinned at immutable tags

@@ -1,0 +1,3 @@
+cli:
+  name: richapi
+  short: "Rich API CLI dogfooding all v0.1 features"

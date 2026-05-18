@@ -15,13 +15,9 @@ API 生成生产级 Cobra CLI，并内置结构化命令发现、认证元数据
 生成的 CLI 自带 command catalog JSON、意图搜索、单命令详情 JSON、认证元数据、
 请求体构造器、结构化输出，以及仓库内的 Skill 目录 `skills/<cli-name>/`。
 
-本地 60 秒 demo：
+先看 CLI 使用说明：
 
-```sh
-bash examples/petstore/run.sh
-```
-
-它会生成真实 CLI，并展示 `search`、`commands show` 和 `commands schema` 输出。
+- [CLI Usage](docs/cli-usage.md)：使用 `lathe bootstrap` 生成下游 CLI，接入 `cmd/<name>/main.go`，构建并验证 agent loop。
 
 ![lathe 架构图](docs/images/architecture.png)
 
@@ -78,7 +74,8 @@ Lathe 的判断很简单：API 规格才是事实来源，CLI 应该从规格生
 
 - [Governance](GOVERNANCE.md)：决策流程和兼容性预期。
 - [Maintainers](MAINTAINERS.md)：维护者职责和 review 预期。
-- [Showcase](SHOWCASE.md)：可运行 demo 和真实使用记录。
+- [Showcase](SHOWCASE.md)：CLI 生成路径和真实使用记录。
+- [CLI Usage](docs/cli-usage.md)：生成并验证下游 CLI 的命令序列。
 - [Adopters](ADOPTERS.md)：公开或匿名用户条目。
 - [Contributing](CONTRIBUTING.md)：本地 setup、PR 流程和项目范围。
 - [Security](SECURITY.md)：私密漏洞报告和支持版本。

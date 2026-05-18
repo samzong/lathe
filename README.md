@@ -17,13 +17,9 @@ Generated CLIs ship with command catalog JSON, intent search, per-command detail
 JSON, auth metadata, body builders, structured output formats, and a repo-local
 Skill directory under `skills/<cli-name>/`.
 
-Try the local 60-second demo:
+Start with the CLI usage guide:
 
-```sh
-bash examples/petstore/run.sh
-```
-
-It generates a real CLI, then shows `search`, `commands show`, and `commands schema` output.
+- [CLI Usage](docs/cli-usage.md): generate a downstream CLI with `lathe bootstrap`, wire `cmd/<name>/main.go`, build it, and verify the agent loop.
 
 ![lathe architecture](docs/images/architecture.png)
 
@@ -86,7 +82,8 @@ built, and which output format to prefer.
 
 - [Governance](GOVERNANCE.md): decision process and compatibility expectations.
 - [Maintainers](MAINTAINERS.md): maintainer responsibilities and review expectations.
-- [Showcase](SHOWCASE.md): runnable demos and real-world usage notes.
+- [Showcase](SHOWCASE.md): CLI generation paths and real-world usage notes.
+- [CLI Usage](docs/cli-usage.md): command sequence for generating and validating a downstream CLI.
 - [Adopters](ADOPTERS.md): public and anonymized user entries.
 - [Contributing](CONTRIBUTING.md): local setup, PR workflow, and project scope.
 - [Security](SECURITY.md): private vulnerability reporting and supported versions.

@@ -12,12 +12,10 @@ make check        # fmt-check, vet, lint, test — the full quality gate
 
 Requires Go (version in `go.mod`) and [`golangci-lint`](https://golangci-lint.run/). No other tooling needed.
 
-To run the end-to-end examples:
+To follow the end-to-end generated CLI workflow, see:
 
-```sh
-examples/petstore/run.sh    # Swagger 2.0 petstore
-examples/richapi/run.sh     # all v0.1 features
-```
+- [CLI Usage](docs/cli-usage.md) for the exact `go mod init` -> `lathe bootstrap` -> `go build` path.
+- [Showcase](SHOWCASE.md) for the petstore and richapi generation paths.
 
 ## Workflow
 

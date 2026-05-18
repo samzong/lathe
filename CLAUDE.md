@@ -25,7 +25,7 @@ Lathe is not a generic CLI framework, plugin loader, GUI/TUI, API gateway, or ha
 - `internal/lathecmd`, `internal/sourceconfig`, `internal/specsync`, `internal/codegen`, `internal/overlay`, and `internal/auth` hold implementation-only packages.
 - `pkg/runtime`, `pkg/config`, and `pkg/lathe` are downstream-facing runtime/library surfaces for generated CLIs.
 - Tests live beside implementation as `*_test.go`; golden fixtures live under package-local `testdata/`.
-- `examples/` contains runnable examples, and `docs/` contains architecture material and images.
+- `examples/` contains example generation paths, and `docs/` contains architecture material, usage guides, and images.
 
 ## Architecture invariants
 
@@ -55,7 +55,7 @@ Lathe is not a generic CLI framework, plugin loader, GUI/TUI, API gateway, or ha
 - `make check` is the full local quality gate: format check, `go vet`, `golangci-lint`, and tests.
 - `make test` runs `go test ./...`.
 - `make fmt`, `make fmt-check`, `make vet`, `make lint`, and `make tidy` run focused maintenance tasks.
-- `make example-petstore` or `bash examples/richapi/run.sh` exercise end-to-end examples.
+- `docs/cli-usage.md` documents the end-to-end generated CLI workflow.
 - Prefer the narrowest Make target that proves the changed surface.
 - Use `make check` before commit or PR unless the change is documentation-only and the user agrees to skip it.
 
