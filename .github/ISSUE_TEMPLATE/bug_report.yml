@@ -1,0 +1,57 @@
+name: Bug report
+description: Report incorrect generated CLI behavior, runtime behavior, or codegen output.
+title: "bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Please include a minimal reproduction so maintainers can verify the behavior quickly.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What broke, and what did you expect instead?
+      placeholder: "Generated command sends the wrong request body for ..."
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Include the smallest spec/config shape and exact command sequence.
+      placeholder: |
+        1. Create cli.yaml with ...
+        2. Create specs/sources.yaml with ...
+        3. Run ...
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Paste the relevant output, HTTP request shape, generated catalog entry, or error.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: Describe the behavior Lathe should produce.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include Lathe version, Go version, OS, and relevant tool versions.
+      placeholder: |
+        lathe: v0.2.1
+        go: go version ...
+        os: macOS/Linux/Windows ...
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional context
+      description: Links, logs, screenshots, or notes. Redact tokens and secrets before posting.

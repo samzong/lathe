@@ -8,7 +8,7 @@ Demonstrates the full lathe workflow: OpenAPI 3 spec → codegen → working CLI
 bash examples/petstore/run.sh
 ```
 
-The script creates a throwaway project in `/tmp`, runs codegen, builds a real binary, and prints `--help` output. Everything is cleaned up on exit.
+The script creates a throwaway project in `/tmp`, runs codegen, builds a real binary, and prints `--help`, `search`, `commands show`, and `commands schema` output. Everything is cleaned up on exit.
 
 ## What the script does
 
@@ -19,6 +19,7 @@ The script creates a throwaway project in `/tmp`, runs codegen, builds a real bi
 5. Runs codegen → produces `internal/generated/`
 6. Writes `cmd/petstore/main.go` (wiring code)
 7. `go build` → runs `petstore --help`
+8. Demonstrates the agent loop with `search`, `commands show`, and `commands schema`
 
 ## Expected output
 

@@ -3,12 +3,59 @@ version: 2
 project_name: lathe
 
 builds:
-  - skip: true
+  - id: lathe-specsync
+    main: ./cmd/specsync
+    binary: lathe-specsync
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+
+  - id: lathe-codegen
+    main: ./cmd/codegen
+    binary: lathe-codegen
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - ids:
+      - lathe-specsync
+      - lathe-codegen
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
 
 source:
   enabled: true
   name_template: "{{ .ProjectName }}_{{ .Version }}_source"
   format: tar.gz
+
+checksum:
+  name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"
 
 changelog:
   sort: asc

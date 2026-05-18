@@ -1,0 +1,48 @@
+name: Feature request
+description: Propose a scoped improvement to Lathe.
+title: "feat: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Lathe is a spec-to-agent-toolchain generator. Features should strengthen spec fidelity, reproducibility, generated command correctness, runtime catalog inspectability, auth/body/output behavior, or generated Skill quality.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What user problem does this solve?
+      placeholder: "Agents cannot safely inspect ..."
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: What should Lathe do?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Existing workarounds, overlays, config, or external tools you considered.
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Affected surface
+      multiple: true
+      options:
+        - Swagger/OpenAPI/proto parsing
+        - Normalization/codegen
+        - Runtime HTTP/auth/body/output behavior
+        - Command catalog/search
+        - Generated Skill docs
+        - Release/install/docs/community
+    validations:
+      required: true
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility notes
+      description: Does this change generated command shape, catalog schema, or runtime behavior?

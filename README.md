@@ -17,6 +17,14 @@ Generated CLIs ship with command catalog JSON, intent search, per-command detail
 JSON, auth metadata, body builders, structured output formats, and a repo-local
 Skill directory under `skills/<cli-name>/`.
 
+Try the local 60-second demo:
+
+```sh
+bash examples/petstore/run.sh
+```
+
+It generates a real CLI, then shows `search`, `commands show`, and `commands schema` output.
+
 ![lathe architecture](docs/images/architecture.png)
 
 ---
@@ -74,10 +82,30 @@ built, and which output format to prefer.
 | Real CLI UX | Hostname-keyed auth, --file, --set, --set-str, -o table\|json\|yaml\|raw, enum validation, pagination, streaming, and --debug. |
 | Overlay polish | Improve summaries, aliases, parameter help, grouping, and examples without editing generated code. |
 
+## Project Resources
+
+- [Governance](GOVERNANCE.md): decision process and compatibility expectations.
+- [Maintainers](MAINTAINERS.md): maintainer responsibilities and review expectations.
+- [Showcase](SHOWCASE.md): runnable demos and real-world usage notes.
+- [Adopters](ADOPTERS.md): public and anonymized user entries.
+- [Contributing](CONTRIBUTING.md): local setup, PR workflow, and project scope.
+- [Security](SECURITY.md): private vulnerability reporting and supported versions.
+
 ## Quick Start
 
 Create a repository from [github.com/samzong/lathe](https://github.com/samzong/lathe),
 then configure two files.
+
+### Install the Tools
+
+Lathe release archives include two command-line tools:
+
+- `lathe-specsync`: sync pinned upstream specs into the local cache.
+- `lathe-codegen`: generate runtime command specs and optional Skill files.
+
+Download the archive for your platform from the [latest release](https://github.com/samzong/lathe/releases/latest), unpack it, and put both binaries on your `PATH`.
+
+When working from a source checkout, you can use the Make targets shown below instead of installing the release tools.
 
 ### 1. Define the CLI
 

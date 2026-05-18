@@ -169,5 +169,14 @@ echo ""
 echo "========== petstore pets --help =========="
 ./bin/petstore pets --help
 echo ""
+echo "========== petstore search \"list pets\" --json =========="
+./bin/petstore search "list pets" --json
+echo ""
+echo "========== petstore commands show pets pets list --json =========="
+./bin/petstore commands show pets pets list --json
+echo ""
+echo "========== petstore commands schema --json =========="
+./bin/petstore commands schema --json
+echo ""
 echo "Done. Binary saved to examples/petstore/bin/petstore"
 echo "Done. Skill saved to examples/petstore/skills/petstore"

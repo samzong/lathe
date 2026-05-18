@@ -15,6 +15,14 @@ API 生成生产级 Cobra CLI，并内置结构化命令发现、认证元数据
 生成的 CLI 自带 command catalog JSON、意图搜索、单命令详情 JSON、认证元数据、
 请求体构造器、结构化输出，以及仓库内的 Skill 目录 `skills/<cli-name>/`。
 
+本地 60 秒 demo：
+
+```sh
+bash examples/petstore/run.sh
+```
+
+它会生成真实 CLI，并展示 `search`、`commands show` 和 `commands schema` 输出。
+
 ![lathe 架构图](docs/images/architecture.png)
 
 ---
@@ -66,10 +74,30 @@ Lathe 的判断很简单：API 规格才是事实来源，CLI 应该从规格生
 | 真实 CLI 体验 | 按 hostname 管理认证，支持 `--file`、`--set`、`--set-str`、`-o table|json|yaml|raw`、枚举校验、分页、流式响应和 `--debug`。 |
 | Overlay 润色 | 不改生成代码，也能补充摘要、别名、参数帮助、分组和示例。 |
 
+## 项目资源
+
+- [Governance](GOVERNANCE.md)：决策流程和兼容性预期。
+- [Maintainers](MAINTAINERS.md)：维护者职责和 review 预期。
+- [Showcase](SHOWCASE.md)：可运行 demo 和真实使用记录。
+- [Adopters](ADOPTERS.md)：公开或匿名用户条目。
+- [Contributing](CONTRIBUTING.md)：本地 setup、PR 流程和项目范围。
+- [Security](SECURITY.md)：私密漏洞报告和支持版本。
+
 ## 快速开始
 
 基于 [github.com/samzong/lathe](https://github.com/samzong/lathe) 创建仓库，
 然后配置两个文件。
+
+### 安装工具
+
+Lathe release archive 包含两个命令行工具：
+
+- `lathe-specsync`：把锁定版本的上游 API 规格同步到本地 cache。
+- `lathe-codegen`：生成 runtime command specs 和可选 Skill 文件。
+
+从 [latest release](https://github.com/samzong/lathe/releases/latest) 下载对应平台的 archive，解压后把两个二进制放进 `PATH`。
+
+如果你是在 source checkout 里工作，也可以继续使用下面的 Make targets，不需要单独安装 release 工具。
 
 ### 1. 定义 CLI
 
