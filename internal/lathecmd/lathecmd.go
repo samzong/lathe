@@ -1,7 +1,6 @@
-package main
+package lathecmd
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -19,24 +18,81 @@ import (
 	"github.com/samzong/lathe/internal/sourceconfig"
 	"github.com/samzong/lathe/internal/specsync"
 	"github.com/samzong/lathe/pkg/config"
+	"github.com/samzong/lathe/pkg/lathe"
 )
 
-func main() {
-	if err := run(os.Args[1:]); err != nil {
-		if errors.Is(err, flag.ErrHelp) {
-			return
-		}
-		fmt.Fprintln(os.Stderr, "error:", err)
-		os.Exit(1)
+func Run(args []string) error {
+	return runWithOutputs(args, os.Stdout, os.Stderr)
+}
+
+func RunWithOutput(args []string, output io.Writer) error {
+	return runWithOutputs(args, output, output)
+}
+
+func runWithOutputs(args []string, stdout io.Writer, stderr io.Writer) error {
+	if len(args) == 0 {
+		printRootUsage(stderr)
+		return flag.ErrHelp
+	}
+
+	switch args[0] {
+	case "-h", "--help", "help":
+		printRootUsage(stderr)
+		return flag.ErrHelp
+	case "specsync":
+		return RunSpecsync(args[1:], stderr)
+	case "codegen":
+		return RunCodegen(args[1:], stderr)
+	case "bootstrap":
+		return RunBootstrap(args[1:], stderr)
+	case "version":
+		fmt.Fprintf(stdout, "lathe %s (%s, %s)\n", lathe.Version, lathe.Commit, lathe.Date)
+		return nil
+	default:
+		return fmt.Errorf("unknown command %q", args[0])
 	}
 }
 
-func run(args []string) error {
-	return runWithOutput(args, os.Stderr)
+func RunSpecsync(args []string, output io.Writer) error {
+	fs := flag.NewFlagSet("lathe specsync", flag.ContinueOnError)
+	fs.SetOutput(output)
+	sourcesPath := fs.String("sources", "specs/sources.yaml", "sources.yaml path")
+	cacheRoot := fs.String("cache", "", "cache root (default $LATHE_SPECS_CACHE or .cache)")
+	filter := fs.String("source", "", "sync only this source")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+
+	cfg, err := sourceconfig.Load(*sourcesPath)
+	if err != nil {
+		return err
+	}
+	absRoot, err := resolveCacheRoot(*cacheRoot)
+	if err != nil {
+		return err
+	}
+	return specsync.Sync(cfg, specsync.Options{
+		CacheRoot: absRoot,
+		Filter:    *filter,
+	})
 }
 
-func runWithOutput(args []string, output io.Writer) error {
-	fs := flag.NewFlagSet("codegen", flag.ContinueOnError)
+func RunCodegen(args []string, output io.Writer) error {
+	fs := flag.NewFlagSet("lathe codegen", flag.ContinueOnError)
+	fs.SetOutput(output)
+	sourcesPath := fs.String("sources", "specs/sources.yaml", "sources.yaml path")
+	manifestPath := fs.String("manifest", "cli.yaml", "cli.yaml path")
+	cacheRoot := fs.String("cache", "", "cache root (default $LATHE_SPECS_CACHE or .cache)")
+	overlayDir := fs.String("overlay", "", "directory containing <module>.yaml overlay files (optional)")
+	skillRoot := fs.String("skill-root", "skills", "skill output root, or empty to disable skill generation")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	return runCodegen(*sourcesPath, *manifestPath, *cacheRoot, *overlayDir, *skillRoot)
+}
+
+func RunBootstrap(args []string, output io.Writer) error {
+	fs := flag.NewFlagSet("lathe bootstrap", flag.ContinueOnError)
 	fs.SetOutput(output)
 	sourcesPath := fs.String("sources", "specs/sources.yaml", "sources.yaml path")
 	manifestPath := fs.String("manifest", "cli.yaml", "cli.yaml path")
@@ -51,20 +107,42 @@ func runWithOutput(args []string, output io.Writer) error {
 	if err != nil {
 		return err
 	}
+	absRoot, err := resolveCacheRoot(*cacheRoot)
+	if err != nil {
+		return err
+	}
+	if err := specsync.Sync(cfg, specsync.Options{CacheRoot: absRoot}); err != nil {
+		return err
+	}
+	return runCodegen(*sourcesPath, *manifestPath, absRoot, *overlayDir, *skillRoot)
+}
 
-	overlays, err := overlay.LoadDir(*overlayDir)
+func printRootUsage(output io.Writer) {
+	fmt.Fprint(output, `Usage:
+  lathe <command> [flags]
+
+Commands:
+  lathe specsync   Sync pinned upstream API specs into the local cache
+  lathe codegen    Generate runtime command specs and optional Skill files
+  lathe bootstrap  Sync specs and generate code in one pass
+  lathe version    Print version information
+
+Run "lathe <command> -h" for command-specific flags.
+`)
+}
+
+func runCodegen(sourcesPath string, manifestPath string, cacheRoot string, overlayDir string, skillRoot string) error {
+	cfg, err := sourceconfig.Load(sourcesPath)
 	if err != nil {
 		return err
 	}
 
-	root := *cacheRoot
-	if root == "" {
-		root = os.Getenv("LATHE_SPECS_CACHE")
+	overlays, err := overlay.LoadDir(overlayDir)
+	if err != nil {
+		return err
 	}
-	if root == "" {
-		root = ".cache"
-	}
-	absRoot, err := filepath.Abs(root)
+
+	absRoot, err := resolveCacheRoot(cacheRoot)
 	if err != nil {
 		return err
 	}
@@ -72,8 +150,8 @@ func runWithOutput(args []string, output io.Writer) error {
 
 	var manifest *config.Manifest
 	var skillDir string
-	if *skillRoot != "" {
-		data, err := os.ReadFile(*manifestPath)
+	if skillRoot != "" {
+		data, err := os.ReadFile(manifestPath)
 		if err != nil {
 			return err
 		}
@@ -81,7 +159,7 @@ func runWithOutput(args []string, output io.Writer) error {
 		if err != nil {
 			return err
 		}
-		skillDir, err = skillOutputDir(*skillRoot, manifest.CLI.Name)
+		skillDir, err = skillOutputDir(skillRoot, manifest.CLI.Name)
 		if err != nil {
 			return err
 		}
@@ -123,6 +201,16 @@ func runWithOutput(args []string, output io.Writer) error {
 		}
 	}
 	return nil
+}
+
+func resolveCacheRoot(root string) (string, error) {
+	if root == "" {
+		root = os.Getenv("LATHE_SPECS_CACHE")
+	}
+	if root == "" {
+		root = ".cache"
+	}
+	return filepath.Abs(root)
 }
 
 func parseSource(src *sourceconfig.Source, syncDir string) (*rawir.RawModule, error) {

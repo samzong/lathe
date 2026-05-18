@@ -21,15 +21,15 @@ Lathe is not a generic CLI framework, plugin loader, GUI/TUI, API gateway, or ha
 
 ## Project structure
 
-- `cmd/specsync` and `cmd/codegen` contain executable entry points for spec syncing and code generation.
-- `internal/sourceconfig`, `internal/specsync`, `internal/codegen`, `internal/overlay`, and `internal/auth` hold implementation-only packages.
+- `cmd/lathe` contains the executable entry point for spec syncing, code generation, and bootstrap.
+- `internal/lathecmd`, `internal/sourceconfig`, `internal/specsync`, `internal/codegen`, `internal/overlay`, and `internal/auth` hold implementation-only packages.
 - `pkg/runtime`, `pkg/config`, and `pkg/lathe` are downstream-facing runtime/library surfaces for generated CLIs.
 - Tests live beside implementation as `*_test.go`; golden fixtures live under package-local `testdata/`.
 - `examples/` contains runnable examples, and `docs/` contains architecture material and images.
 
 ## Architecture invariants
 
-- Lathe has two phases: codegen-time (`cmd/specsync`, `cmd/codegen`, `internal/sourceconfig`, `internal/specsync`, `internal/codegen/**`, `internal/overlay`) and runtime (`pkg/config`, `pkg/runtime`, `pkg/lathe`, `internal/auth`, plus generated modules).
+- Lathe has two phases: codegen-time (`cmd/lathe`, `internal/lathecmd`, `internal/sourceconfig`, `internal/specsync`, `internal/codegen/**`, `internal/overlay`) and runtime (`pkg/config`, `pkg/runtime`, `pkg/lathe`, `internal/auth`, plus generated modules).
 - The seam is `internal/generated/<module>/<module>_gen.go`: generated `[]runtime.CommandSpec` literals compiled into the downstream CLI.
 - `pkg/runtime` must remain independent of `internal/codegen/**`; runtime behavior cannot depend on raw specs, overlays, or sync cache state.
 - Overlays are codegen-time polish only. They are merged into `CommandSpec`; the runtime must not learn overlay concepts.
@@ -49,7 +49,7 @@ Lathe is not a generic CLI framework, plugin loader, GUI/TUI, API gateway, or ha
 ## Commands
 
 - `make help` lists available targets.
-- `make bootstrap` runs `sync-specs` and `gen` for first-time generated CLI setup in a repo that has `cli.yaml` and `specs/sources.yaml`.
+- `make bootstrap` runs `lathe bootstrap` for first-time generated CLI setup in a repo that has `cli.yaml` and `specs/sources.yaml`.
 - `make sync-specs` fetches specs declared in `specs/sources.yaml`; cache root is `-cache`, `$LATHE_SPECS_CACHE`, or `.cache`.
 - `make gen` regenerates `internal/generated` and, by default, `skills/<cli-name>/` from cached specs. It requires valid generated-CLI inputs; do not assume it is the right gate for unrelated core-package edits.
 - `make check` is the full local quality gate: format check, `go vet`, `golangci-lint`, and tests.

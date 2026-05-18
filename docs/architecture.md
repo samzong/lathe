@@ -88,11 +88,11 @@ All normalized into the same `RawOperation` fields. By the time a spec reaches `
 ```mermaid
 graph TD
     subgraph cmd["cmd/ — binaries"]
-        C1[cmd/specsync]
-        C2[cmd/codegen]
+        C1[cmd/lathe]
     end
 
     subgraph internal["internal/ — codegen-only"]
+        I0[lathecmd]
         I1[specsync]
         I2[sourceconfig]
         I3[codegen/backends/swagger]
@@ -111,16 +111,15 @@ graph TD
         P4[internal/auth]
     end
 
-    C1 --> I1
-    C1 --> I2
-    C2 --> I1
-    C2 --> I2
-    C2 --> I3
-    C2 --> I3b
-    C2 --> I4
-    C2 --> I5
-    C2 --> I7
-    C2 --> I8
+    C1 --> I0
+    I0 --> I1
+    I0 --> I2
+    I0 --> I3
+    I0 --> I3b
+    I0 --> I4
+    I0 --> I5
+    I0 --> I7
+    I0 --> I8
 
     I3 --> I6
     I3b --> I6
@@ -144,8 +143,8 @@ graph TD
 
 | Package | Phase | Responsibility |
 |---|---|---|
-| `cmd/specsync` | codegen | Thin wrapper over `internal/specsync`. Resolves cache root, runs sync. |
-| `cmd/codegen` | codegen | Orchestrates: load sources → verify sync state → parse → normalize → render. |
+| `cmd/lathe` | codegen | Single binary entrypoint for `specsync`, `codegen`, and `bootstrap`. |
+| `internal/lathecmd` | codegen | Resolves CLI flags and orchestrates: sync specs, load sources, verify sync state, parse, normalize, render. |
 | `internal/sourceconfig` | codegen | Parse `specs/sources.yaml`. Requires `pinned_tag`; treats the value as an immutable ref. |
 | `internal/specsync` | codegen | `git clone --filter=blob:none`, checkout pinned ref, stage relevant files into `.cache/specs-sync/<module>/`. Writes `sync-state.yaml` (including `resolved_sha`). |
 | `internal/codegen/backends/swagger` | codegen | Parse `*.swagger.json` → `RawModule`. Merges multiple files; first-seen wins on duplicates. |

@@ -5,9 +5,9 @@ LATHE_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 DIR="$(mktemp -d)"
 trap 'rm -rf "$DIR"' EXIT
 
-echo "==> Building codegen tool..."
-CODEGEN="$DIR/codegen"
-(cd "$LATHE_ROOT" && go build -o "$CODEGEN" ./cmd/codegen)
+echo "==> Building lathe tool..."
+LATHE="$DIR/lathe"
+(cd "$LATHE_ROOT" && go build -o "$LATHE" ./cmd/lathe)
 
 cd "$DIR"
 
@@ -107,7 +107,7 @@ EOF
 
 # Run codegen
 echo "==> Running codegen..."
-"$CODEGEN" -sources specs/sources.yaml -cache .cache
+"$LATHE" codegen -sources specs/sources.yaml -cache .cache
 test -f skills/petstore/SKILL.md
 
 # main.go
